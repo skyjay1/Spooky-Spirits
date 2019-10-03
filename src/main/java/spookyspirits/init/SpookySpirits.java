@@ -58,6 +58,7 @@ public class SpookySpirits {
 	public static void registerEntities(final RegistryEvent.Register<EntityType<?>> event) {
 		LOGGER.debug(MODID + ": RegisterEntityType");
 		PROXY.registerEntities(event);
+		PROXY.registerEntityRenders();
 	}
 	
 	@SubscribeEvent

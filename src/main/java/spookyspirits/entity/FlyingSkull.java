@@ -6,7 +6,7 @@ import net.minecraft.world.World;
 
 public class FlyingSkull extends FlyingEntity {
 
-	protected FlyingSkull(EntityType<? extends FlyingEntity> type, World world) {
+	public FlyingSkull(EntityType<? extends FlyingEntity> type, World world) {
 		super(type, world);
 		
 	}
@@ -14,5 +14,11 @@ public class FlyingSkull extends FlyingEntity {
 	
 	public boolean isFlaming() {
 		return true;
+	}
+	
+	@Override
+	public boolean isBurning() {
+		//return isFlaming();
+		return false;
 	}
 }
