@@ -30,7 +30,7 @@ public class ModelWillOWisp extends EntityModel<WillOWisp> {
 		
 		this.setRotationAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
 		// fade in and out
-		float fading = getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId(), 0.03F, 1.55F);
+		float fading = getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId(), 0.08F, 1.55F);
 		GlStateManager.enableBlend();
 		GlStateManager.enableNormalize();
 		GlStateManager.blendFunc(770, 771);
