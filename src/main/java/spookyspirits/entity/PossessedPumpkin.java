@@ -4,7 +4,6 @@ import java.util.EnumSet;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
@@ -34,7 +33,7 @@ public class PossessedPumpkin extends MonsterEntity {
 	/** Must be less than or equal to Byte.MAX_VALUE [127] **/
 	public static final int MAX_STANDING_TICKS = 10;
 	
-	private static final double attackDisSq = Math.pow(2.8D, 2);
+	private static final double attackDisSq = Math.pow(2.0D, 2);
 
 	public PossessedPumpkin(EntityType<? extends PossessedPumpkin> type, World world) {
 		super(type, world);
@@ -44,11 +43,10 @@ public class PossessedPumpkin extends MonsterEntity {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		final double moveSpeed = this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue();
-		this.goalSelector.addGoal(4, new MoveTowardTargetGoal(this, moveSpeed));
-		this.goalSelector.addGoal(5, new LeapAttackGoal(this, 0.4F));
-		this.goalSelector.addGoal(7, new WanderAvoidWaterGoal(this, moveSpeed));
-		this.goalSelector.addGoal(8, new LookAtTargetGoal(this, PlayerEntity.class, 8.0F));
+		this.goalSelector.addGoal(4, new MoveTowardTargetOrHideGoal(this, 1.0F));
+		this.goalSelector.addGoal(5, new LeapAtTargetWhenCloseGoal(this, 0.4F));
+		this.goalSelector.addGoal(7, new WanderAvoidWaterGoal(this, 0.6F));
+		this.goalSelector.addGoal(8, new LookAtTargetOrHideGoal(this, PlayerEntity.class, 12.0F));
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, true));
 	}
@@ -72,39 +70,45 @@ public class PossessedPumpkin extends MonsterEntity {
 	@Override
 	public void livingTick() {
 		super.livingTick();
-		// update 'isTargetLooking'
-//		this.setTargetLooking(this.getAttackTarget() != null && this.canBeSeen(this.getAttackTarget()));
-		// update whether pumpkinEntity should be standing
-		if(this.getAttackTarget() != null) {
-			// if target is looking, only stand if target is too close or too far
-			this.setTargetLooking(this.canBeSeen(this.getAttackTarget()));
-			if(this.isTargetLooking()) {
-				final double disSq = this.getDistanceSq(this.getAttackTarget());
-				final double sightRangeSq = Math.pow(22.0D, 2);
-				this.setStandingState(disSq < attackDisSq || disSq > sightRangeSq);
+		if(this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
+			// update whether pumpkinEntity should be standing
+			if(this.getAttackTarget() != null) {
+				// update 'isTargetLooking'
+				this.setTargetLooking(this.canBeSeen(this.getAttackTarget()));
+				print("IsTargetLooking: " + this.isTargetLooking());
+				// if target is looking, only stand if target is too close or too far
+				if(this.isTargetLooking()) {
+					final double disSq = this.getDistanceSq(this.getAttackTarget());
+					this.setStandingState(disSq < attackDisSq);
+				} else {
+					// if target is not looking, feel free to stand
+					this.setStandingState(true);
+				}
 			} else {
-				// if target is not looking, feel free to stand
+				// if no target at all, stand up to wander around
+				this.setTargetLooking(false);
 				this.setStandingState(true);
 			}
-		} else {
-			// if no target at all, stand up to wander around
-			this.setTargetLooking(false);
-			this.setStandingState(true);
-		}
-		// update standing ticks
-		this.updateStandingTicks(1);
-		// if not standing at all, hide
-		if(this.getStandingTicks() <= 0) {
-			this.hide();
+			print("StandingState: " + this.isStandingUp());
+			print("StandingTicks: " + this.getStandingTicks());
+			// update standing ticks
+			this.updateStandingTicks(1);
+			print("StandingTicks after update: " + this.getStandingTicks());
+			// if not standing at all, hide
+			if(this.getStandingTicks() <= 0 && !this.isStandingUp()) {
+				print("Hiding");
+				this.hide();
+			}
 		}
 //		if(this.ticksExisted % 20 == 0 && closestPlayer != null) {
 //			System.out.println("Can be seen: " + canBeSeen(closestPlayer));
 //		}
 	}
 	
-	@Override
-	public void travel(final Vec3d vec) {
-		super.travel(vec);
+	private void print(String s) {
+		if(this.ticksExisted % 20 == 0) {
+			//System.out.println(s);
+		}
 	}
 
 	@Override
@@ -125,16 +129,14 @@ public class PossessedPumpkin extends MonsterEntity {
 	}
 	
 	/**
-	 * Snaps the pumpkinEntity position and rotation to the nearest block
+	 * Snaps the pumpkinEntity position to the nearest block
 	 **/
 	public void hide() {
 		// snap position
 		final double x = Math.round(posX - 0.5D) + 0.5D;
 		final double z = Math.round(posZ - 0.5D) + 0.5D;
 		this.setPosition(x, this.posY, z);
-		// snap direction
-		final float yaw = ((int)(this.rotationYaw / 90F)) * 90F;
-		this.rotateTowards(yaw, this.rotationPitch);
+		this.getNavigator().clearPath();
 	}
 	
 	/**
@@ -146,13 +148,14 @@ public class PossessedPumpkin extends MonsterEntity {
 	public boolean canBeSeen(final LivingEntity entity) {
 		// higher fuzz = wider range of vectors
 		final double fuzz = 2.0D;
+		final double sightRangeSq = Math.pow(32D, 2);
 		Vec3d vec3d = entity.getLook(1.0F).normalize();
 		Vec3d vec3d1 = new Vec3d(this.posX - entity.posX, this.getBoundingBox().minY + (double) this.getEyeHeight()
 				- (entity.posY + (double) entity.getEyeHeight()), this.posZ - entity.posZ);
 		double d0 = vec3d1.length();
 		vec3d1 = vec3d1.normalize();
 		double d1 = vec3d.dotProduct(vec3d1);
-		return d1 > fuzz / d0 && entity.canEntityBeSeen(this);
+		return d1 > fuzz / d0 && this.getDistanceSq(entity) < sightRangeSq && entity.canEntityBeSeen(this);
 	}
 
 	/**
@@ -246,14 +249,14 @@ public class PossessedPumpkin extends MonsterEntity {
 		return this.getDataManager().get(IS_TARGET_LOOKING).booleanValue();
 	}
 	
-	class MoveTowardTargetGoal extends Goal {
+	class MoveTowardTargetOrHideGoal extends Goal {
 		
 		private final PossessedPumpkin entity;
-		private final double speed;
+		private final double speedFactor;
 
-		public MoveTowardTargetGoal(final PossessedPumpkin entityIn, final double speedIn) {
+		public MoveTowardTargetOrHideGoal(final PossessedPumpkin entityIn, final double speedFactorIn) {
 			this.entity = entityIn;
-			this.speed = speedIn;
+			this.speedFactor = speedFactorIn;
 			this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
 		}
 
@@ -270,6 +273,7 @@ public class PossessedPumpkin extends MonsterEntity {
 		@Override
 		public void startExecuting() {
 			if(this.entity.getAttackTarget() != null) {
+				final double speed = entity.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue() * speedFactor;
 				this.entity.getNavigator().tryMoveToEntityLiving(entity.getAttackTarget(), speed);
 			}
 		}
@@ -279,8 +283,8 @@ public class PossessedPumpkin extends MonsterEntity {
 	class WanderAvoidWaterGoal extends WaterAvoidingRandomWalkingGoal {
 
 		private final PossessedPumpkin entity;
-		public WanderAvoidWaterGoal(final PossessedPumpkin creature, final double speedIn) {
-			super(creature, speedIn);
+		public WanderAvoidWaterGoal(final PossessedPumpkin creature, final double speedFactorIn) {
+			super(creature, speedFactorIn);
 			this.entity = creature;
 		}
 
@@ -289,12 +293,17 @@ public class PossessedPumpkin extends MonsterEntity {
 			return entity.canWalk() && super.shouldExecute();
 		}
 
+		@Override
+		public void startExecuting() {
+			final double moveSpeed = entity.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue() * this.speed;
+			this.creature.getNavigator().tryMoveToXYZ(this.x, this.y, this.z, moveSpeed);
+		}
 	}
 	
-	class LeapAttackGoal extends LeapAtTargetGoal {
+	class LeapAtTargetWhenCloseGoal extends LeapAtTargetGoal {
 
 		private final PossessedPumpkin entity;
-		public LeapAttackGoal(final PossessedPumpkin leapingEntity, float leapMotionYIn) {
+		public LeapAtTargetWhenCloseGoal(final PossessedPumpkin leapingEntity, float leapMotionYIn) {
 			super(leapingEntity, leapMotionYIn);
 			this.entity = leapingEntity;
 		}
@@ -304,23 +313,29 @@ public class PossessedPumpkin extends MonsterEntity {
 			if(entity.getAttackTarget() != null && entity.getDistanceSq(entity.getAttackTarget()) < attackDisSq) {
 				return super.shouldExecute();
 			}
-			return entity.canWalk() && super.shouldExecute();
+			return false;
 		}
 	}
 	
-	class LookAtTargetGoal extends LookAtGoal {
+	class LookAtTargetOrHideGoal extends LookAtGoal {
 		
 		private final PossessedPumpkin pumpkinEntity;
 
-		public LookAtTargetGoal(PossessedPumpkin entityIn, Class<? extends LivingEntity> watchTargetClass, float maxDistance) {
+		public LookAtTargetOrHideGoal(PossessedPumpkin entityIn, Class<? extends LivingEntity> watchTargetClass, float maxDistance) {
 			super(entityIn, watchTargetClass, maxDistance);
 			pumpkinEntity = entityIn;
 		}
 		
 		@Override
-		public boolean shouldExecute() {
-			return pumpkinEntity.canWalk() && super.shouldExecute();
-		}
+		 public void tick() {
+			 if(pumpkinEntity.isStandingUp()) {
+				 super.tick();
+			} else {
+				// snap direction
+				final float yaw = ((int) (pumpkinEntity.rotationYaw / 90F)) * 90F;
+				pumpkinEntity.rotateTowards(yaw, pumpkinEntity.rotationPitch);
+			 }
+		 }
 	}
 
 }
