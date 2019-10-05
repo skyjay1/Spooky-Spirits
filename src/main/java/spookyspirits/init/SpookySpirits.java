@@ -17,6 +17,7 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import spookyspirits.entity.Wisp;
 import spookyspirits.proxies.ClientProxy;
 import spookyspirits.proxies.CommonProxy;
 

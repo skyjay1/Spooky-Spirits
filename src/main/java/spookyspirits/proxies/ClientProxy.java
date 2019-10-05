@@ -17,5 +17,6 @@ public class ClientProxy extends CommonProxy {
 		RenderingRegistry.registerEntityRenderingHandler(FlyingSkull.class, RenderFlyingSkull::new);
 		RenderingRegistry.registerEntityRenderingHandler(WillOWisp.class, RenderWillOWisp::new);
 		RenderingRegistry.registerEntityRenderingHandler(PossessedPumpkin.class, RenderPossessedPumpkin::new);
+	
 	}
 }

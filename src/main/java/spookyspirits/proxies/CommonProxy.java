@@ -1,6 +1,7 @@
 package spookyspirits.proxies;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.BlockItem;
@@ -8,9 +9,11 @@ import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
+import spookyspirits.block.BlockWispLight;
 import spookyspirits.entity.FlyingSkull;
 import spookyspirits.entity.PossessedPumpkin;
 import spookyspirits.entity.WillOWisp;
+import spookyspirits.entity.Wisp;
 import spookyspirits.init.SpookySpirits;
 
 public class CommonProxy {
@@ -20,7 +23,9 @@ public class CommonProxy {
 	}
 
 	public void registerBlocks(final RegistryEvent.Register<Block> event) {
-		
+		event.getRegistry().register(
+				new BlockWispLight(Block.Properties.create(Material.GLASS), 4)
+				.setRegistryName(SpookySpirits.MODID, "wisp_light"));
 	}
 
 	public void registerItems(final RegistryEvent.Register<Item> event) {
@@ -45,7 +50,13 @@ public class CommonProxy {
 				EntityType.Builder.create(PossessedPumpkin::new, EntityClassification.MONSTER)
 					.size(0.99F, 1.2F)
 					.build("possessed_pumpkin").setRegistryName(SpookySpirits.MODID, "possessed_pumpkin")
-			);
+		);
+		
+		event.getRegistry().register(
+				EntityType.Builder.create(Wisp::new, EntityClassification.MONSTER)
+					.size(0.8F, 2.2F)
+					.build("wisp").setRegistryName(SpookySpirits.MODID, "wisp")
+		);
 	}
 	
 	public void registerEntityRenders() { }
