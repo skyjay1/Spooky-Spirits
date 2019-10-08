@@ -19,4 +19,8 @@ public class RenderWillOWisp extends LivingRenderer<WillOWisp, ModelWillOWisp> {
 		return TEXTURE;
 	}
 
+	@Override
+	protected boolean canRenderName(WillOWisp entity) {
+		return false;
+	}
 }

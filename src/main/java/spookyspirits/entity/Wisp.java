@@ -53,17 +53,16 @@ public class Wisp extends FlyingEntity {
 	
 	public Wisp(EntityType<? extends Wisp> type, World world) {
 		super(type, world);
-		
 	}
 	
 	@Override
 	public void livingTick() {
 		super.livingTick();
 		// check for nearby players
-		if(this.ticksExisted % 6 == 0 && this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
-			final double range = 4.0D; // TODO change back to 12.0D
+		if(this.ticksExisted % 2 == 0 && this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
+			final double range = 4.0D;
 			final List<PlayerEntity> list = this.getEntityWorld().getEntitiesWithinAABB(PlayerEntity.class, 
-					this.getBoundingBox().grow(range, range / 4.0D, range));
+					this.getBoundingBox().grow(range, range / 2.0D, range));
 			if(!list.isEmpty()) {
 				// find the nearest player
 				double closestSq = range * range;
@@ -80,7 +79,7 @@ public class Wisp extends FlyingEntity {
 					final Set<WispAction> actions = WispAction.getRandomActionsWeighted(rand, 1 + rand.nextInt(3));
 					for(final WispAction a : actions) {
 						if(a.doAction(this, closest)) {
-							// System.out.println("Action performed! " + a.getName());
+							SpookySpirits.LOGGER.info("Action performed! " + a.getName());
 						}
 					}
 					this.remove();
@@ -95,21 +94,25 @@ public class Wisp extends FlyingEntity {
 			@Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag) {
 		spawnDataIn = super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
 		// spawn WillOWisps nearby
-		if(worldIn instanceof World && this.isServerWorld() /*// TODO re-enable after testing: && reason == SpawnReason.NATURAL */) {
-			for(int i = 0, num = 4 + rand.nextInt(5); i < num; i++) {
-				// find a location for the wisp
-				final BlockPos myPos = this.getPosition();
-				final int minRadius = 24;
-				// attempt to find a blockpos that is AIR and CLOSER (to the wisp)
-				BlockPos p = myPos;
-				for(int j = 0, attempts = 30; j < attempts; j++) {
-					// x, y, and z each have a chance to be flipped
-					int x = (rand.nextBoolean() ? 1 : -1) * (minRadius + rand.nextInt(minRadius));
-					int y = (rand.nextBoolean() ? 1 : -1) * rand.nextInt(8) - 4;
-					int z = (rand.nextBoolean() ? 1 : -1) * (minRadius + rand.nextInt(minRadius));
-					p = myPos.add(x, y, z);
-					// if it's a valid location, spawn a WillOWisp
-					if(worldIn.isAirBlock(p)) {
+		if(this.isServerWorld() /*// TODO re-enable after testing: && reason == SpawnReason.NATURAL */) {
+			final BlockPos myPos = this.getPosition();
+			final int minRadius = 24;
+			final int extraRadius = 16;
+			// dividing by 6 will cause approx. 6*2=12 spawns
+			final double dt = Math.PI / 6.0D;
+			// cycle through each angle in a full circle
+			for(double t = 0; t < 2 * Math.PI; t += dt + rand.nextDouble() * dt * 0.5D) {
+				double sine = Math.sin(t);
+				double cosine = Math.cos(t);
+				// try several times to find a location for the wisp
+				for(int i = 0, attempts = 10; i < attempts; i++) {
+					int x = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * sine);
+					int y = rand.nextInt(extraRadius + i * 2);
+					int z = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * cosine);
+					int dy = rand.nextBoolean() ? 1 : 2;
+					BlockPos p = Wisp.getBestY(this.getEntityWorld(), myPos.add(x, y, z), dy);
+					// if the chosen position is actually air, place a Will O Wisp
+					if(this.getEntityWorld().isAirBlock(p)) {
 						WillOWisp w = SpiritEntities.WILL_O_WISP.create(this.world, (CompoundNBT)null, (ITextComponent)null, (PlayerEntity)null, p, SpawnReason.MOB_SUMMONED, false, false);
 						w.setPosition(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D);
 						w.setWisp(this.getUniqueID());
@@ -124,7 +127,7 @@ public class Wisp extends FlyingEntity {
 	}
 	
 	@Override
-	public void applyEntityCollision(Entity entityIn) {
+	public void collideWithEntity(final Entity entityIn) {
 		// do nothing
 	}
 
@@ -132,6 +135,22 @@ public class Wisp extends FlyingEntity {
 	public boolean isPushedByWater() {
 		return false;
 	}
+	
+	/** 
+	 * Tries to find the lowest y-value that is still air 
+	 * @param p origin (does not affect x and z)
+	 * @param dy the amount of change in y per test
+	 * @return a BlockPos that may or may not actually be air
+	 **/
+	public static BlockPos getBestY(final World world, BlockPos p, int dy) {
+		int attempts = 6;
+		dy = Math.max(1, dy);
+		while(world.isAirBlock(p.down(dy)) && attempts-- > 0) {
+			p = p.down(dy);
+		}
+		return p;
+	}
+	
 //	
 //	public static void initWispActions() {
 //		StringBuilder sb = new StringBuilder();

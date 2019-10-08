@@ -54,7 +54,7 @@ public class WillOWisp extends FlyingEntity {
 	protected void registerGoals() {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new PlaceLightGoal(this, 6));
-		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 8.0D));
+		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 5.5D));
 	}
 
 	@Override
@@ -70,9 +70,11 @@ public class WillOWisp extends FlyingEntity {
 		// udpate fade factor
 		this.fadeFactor = getFadeFactor(this.ticksExisted, 0.08F, 1.55F);
 		
-		// if no wisp after fully loading, despawn
-		if(this.ticksExisted % 30 == 15 && this.isServerWorld() && !this.world.isRemote && !this.hasWisp()) {
-			this.remove();
+		// every 30 ticks, check if has no wisp OR is close enough to wisp to despawn
+		if(this.ticksExisted % 30 == 15 && this.isServerWorld() && !this.world.isRemote) {
+			if(!this.hasWisp() || (this.rand.nextBoolean() && this.getDistanceSq(this.getWisp()) < Math.pow(3.0D, 2))) {
+				this.remove();
+			}
 		}
 		
 		// spawn particles
@@ -109,7 +111,7 @@ public class WillOWisp extends FlyingEntity {
 	}
 	
 	@Override
-	public void applyEntityCollision(Entity entityIn) {
+	public void collideWithEntity(final Entity entityIn) {
 		// do nothing
 	}
 	
@@ -243,7 +245,7 @@ public class WillOWisp extends FlyingEntity {
 		
 		@Override
 		public boolean shouldExecute() {
-			return this.willowisp.getWisp() != null && isPlayerClose() && this.willowisp.fadeFactor > 0.9D;
+			return this.willowisp.fadeFactor > 0.9D && this.willowisp.getWisp() != null && isPlayerClose();
 		}
 		
 		@Override
@@ -252,16 +254,16 @@ public class WillOWisp extends FlyingEntity {
 			final BlockPos wispPos = wisp.getPosition();
 			final BlockPos origin = willowisp.getPosition();
 			final double curDisSq = wispPos.distanceSq(origin);
-			final int radius = Math.max(2, (int)Math.ceil(range * 2));
+			final int radius = Math.max(2, (int)Math.ceil(range * 1.5D));
 			final int radDiv2 = radius / 2;
 			// attempt to find a blockpos that is AIR and CLOSER (to the wisp)
 			BlockPos pos;
-			for(int i = 0, attempts = 30; i < attempts; i++) {
+			for(int i = 0, attempts = 20; i < attempts; i++) {
 				int x = willowisp.rand.nextInt(radius) - radDiv2;
 				int y = willowisp.rand.nextInt(radDiv2);
 				int z = willowisp.rand.nextInt(radius) - radDiv2;
 				int dy = 1 + willowisp.rand.nextInt(3);
-				pos = getBestY(origin.add(x, y, z), dy);
+				pos = Wisp.getBestY(willowisp.getEntityWorld(), origin.add(x, y, z), dy);
 				if(wispPos.distanceSq(pos) < curDisSq && willowisp.getEntityWorld().isAirBlock(pos)) {
 					// attempt to teleport the willowisp
 					if(willowisp.attemptTeleport(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, false)) {
@@ -271,20 +273,6 @@ public class WillOWisp extends FlyingEntity {
 				}
 			}
 			
-		}
-		
-		/** 
-		 * Tries to find the lowest y-value that is still air 
-		 * @param p origin (does not affect x and z)
-		 * @param dy the amount of change in y per test
-		 **/
-		private BlockPos getBestY(BlockPos p, int dy) {
-			int attempts = 6;
-			dy = Math.max(1, dy);
-			while(willowisp.getEntityWorld().isAirBlock(p.down(dy)) && attempts-- > 0) {
-				p = p.down(dy);
-			}
-			return p;
 		}
 
 		private boolean isPlayerClose() {

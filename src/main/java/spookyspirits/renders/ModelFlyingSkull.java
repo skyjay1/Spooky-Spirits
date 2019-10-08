@@ -51,7 +51,7 @@ public class ModelFlyingSkull extends EntityModel<FlyingSkull> {
 	public void setRotationAngles(final FlyingSkull entity, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scaleFactor) {
 //		  this.head.rotateAngleY = netHeadYaw * ((float)Math.PI / 180F);
-	      this.head.rotateAngleX = headPitch * ((float)Math.PI / 180F);
+//	      this.head.rotateAngleX = headPitch * ((float)Math.PI / 180F);
 	}
 	
 //	public void renderFlames(final FlyingSkull entityIn, final float limbSwing, final float limbSwingAmount,
