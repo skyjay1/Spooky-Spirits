@@ -29,17 +29,17 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import spookyspirits.block.BlockWispLight;
-import spookyspirits.init.SpiritBlocks;
+import spookyspirits.init.ModObjects;
 
-public class WillOWisp extends FlyingEntity {
+public class WillOWispEntity extends FlyingEntity {
 
 	protected static final DataParameter<Optional<UUID>> WISP_UUID = EntityDataManager
-			.createKey(WillOWisp.class, DataSerializers.OPTIONAL_UNIQUE_ID);
+			.createKey(WillOWispEntity.class, DataSerializers.OPTIONAL_UNIQUE_ID);
 	private static final String KEY_WISP = "WispUUID";
 	
 	private float fadeFactor;
 
-	public WillOWisp(EntityType<? extends FlyingEntity> type, World world) {
+	public WillOWispEntity(EntityType<? extends FlyingEntity> type, World world) {
 		super(type, world);
 		
 	}
@@ -134,10 +134,10 @@ public class WillOWisp extends FlyingEntity {
 	}
 
 	@Nullable
-	public Wisp getWisp() {
+	public WispEntity getWisp() {
 		final UUID uuid = getWispUUID();
 		return uuid != null && this.world instanceof ServerWorld
-				? (Wisp)((ServerWorld) this.world).getEntityByUuid(uuid)
+				? (WispEntity)((ServerWorld) this.world).getEntityByUuid(uuid)
 				: null;
 	}
 	
@@ -175,12 +175,12 @@ public class WillOWisp extends FlyingEntity {
 	}
 	
 	class PlaceLightGoal extends Goal {
-		private final WillOWisp willowisp;
+		private final WillOWispEntity willowisp;
 		private final BlockState state;
 				
-		public PlaceLightGoal(final WillOWisp willowispIn, final int lightLevel) {
+		public PlaceLightGoal(final WillOWispEntity willowispIn, final int lightLevel) {
 			willowisp = willowispIn;
-			state = SpiritBlocks.WISP_LIGHT.getDefaultState()
+			state = ModObjects.WISP_LIGHT.getDefaultState()
 					.with(BlockWispLight.LIGHT_LEVEL, lightLevel);
 		}
 
@@ -212,7 +212,7 @@ public class WillOWisp extends FlyingEntity {
 					for(int z : ia) {
 						final BlockPos p = origin.add(x, y, z);
 						// if it's already a light, don't do anything else
-						if(willowisp.getEntityWorld().getBlockState(p).getBlock() == SpiritBlocks.WISP_LIGHT) {
+						if(willowisp.getEntityWorld().getBlockState(p).getBlock() == ModObjects.WISP_LIGHT) {
 							return null;
 						} else if(isReplaceablePos(p)) {
 							// if it's not a light but it is replaceable, it's a valid position
@@ -234,10 +234,10 @@ public class WillOWisp extends FlyingEntity {
 	
 	class MoveToWispGoal extends Goal {
 
-		private final WillOWisp willowisp;
+		private final WillOWispEntity willowisp;
 		private final double range;
 		
-		public MoveToWispGoal(final WillOWisp willowispIn, final double detectionRadius) {
+		public MoveToWispGoal(final WillOWispEntity willowispIn, final double detectionRadius) {
 			this.willowisp = willowispIn;
 			this.range = detectionRadius;
 			this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
@@ -250,8 +250,8 @@ public class WillOWisp extends FlyingEntity {
 		
 		@Override
 		public void startExecuting() {
-			final Wisp wisp = this.willowisp.getWisp();
-			final BlockPos wispPos = wisp.getPosition();
+			final WispEntity wispEntity = this.willowisp.getWisp();
+			final BlockPos wispPos = wispEntity.getPosition();
 			final BlockPos origin = willowisp.getPosition();
 			final double curDisSq = wispPos.distanceSq(origin);
 			final int radius = Math.max(2, (int)Math.ceil(range * 1.5D));
@@ -263,7 +263,7 @@ public class WillOWisp extends FlyingEntity {
 				int y = willowisp.rand.nextInt(radDiv2);
 				int z = willowisp.rand.nextInt(radius) - radDiv2;
 				int dy = 1 + willowisp.rand.nextInt(3);
-				pos = Wisp.getBestY(willowisp.getEntityWorld(), origin.add(x, y, z), dy);
+				pos = WispEntity.getBestY(willowisp.getEntityWorld(), origin.add(x, y, z), dy);
 				if(wispPos.distanceSq(pos) < curDisSq && willowisp.getEntityWorld().isAirBlock(pos)) {
 					// attempt to teleport the willowisp
 					if(willowisp.attemptTeleport(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, false)) {

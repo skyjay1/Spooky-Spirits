@@ -6,9 +6,9 @@ import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.client.renderer.model.ModelBox;
 import net.minecraft.util.math.MathHelper;
-import spookyspirits.entity.WillOWisp;
+import spookyspirits.entity.WillOWispEntity;
 
-public class ModelWillOWisp extends EntityModel<WillOWisp> {
+public class ModelWillOWisp extends EntityModel<WillOWispEntity> {
 	
 	private final RendererModel cube;
 
@@ -24,13 +24,13 @@ public class ModelWillOWisp extends EntityModel<WillOWisp> {
 	}
 
 	@Override
-	public void render(final WillOWisp entityIn, final float limbSwing, final float limbSwingAmount,
+	public void render(final WillOWispEntity entityIn, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scale) {
 		GlStateManager.pushMatrix();
 		
 		this.setRotationAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
 		// fade in and out
-		float fading = WillOWisp.getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId(), 0.08F, 1.55F);
+		float fading = WillOWispEntity.getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId(), 0.08F, 1.55F);
 		GlStateManager.enableBlend();
 		GlStateManager.enableNormalize();
 		GlStateManager.blendFunc(770, 771);
@@ -42,7 +42,7 @@ public class ModelWillOWisp extends EntityModel<WillOWisp> {
 	}
 	
 	@Override
-	public void setRotationAngles(final WillOWisp entity, final float limbSwing, final float limbSwingAmount,
+	public void setRotationAngles(final WillOWispEntity entity, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scaleFactor) {
 		float bobbing = (float)Math.sin((entity.ticksExisted + entity.getEntityId()) * 0.09D) * 0.28F;
 		GlStateManager.translatef(0F, bobbing * scaleFactor, 0F);

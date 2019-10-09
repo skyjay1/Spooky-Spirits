@@ -3,11 +3,11 @@ package spookyspirits.renders;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.util.ResourceLocation;
-import spookyspirits.entity.PossessedPumpkin;
-import spookyspirits.entity.WillOWisp;
+import spookyspirits.entity.PossessedPumpkinEntity;
+import spookyspirits.entity.WillOWispEntity;
 import spookyspirits.init.SpookySpirits;
 
-public class RenderPossessedPumpkin extends LivingRenderer<PossessedPumpkin, ModelPossessedPumpkin> {
+public class RenderPossessedPumpkin extends LivingRenderer<PossessedPumpkinEntity, ModelPossessedPumpkin> {
 	
 	private static final ResourceLocation TEXTURE = new ResourceLocation(SpookySpirits.MODID, "textures/entities/possessed_pumpkin.png");
 
@@ -16,12 +16,12 @@ public class RenderPossessedPumpkin extends LivingRenderer<PossessedPumpkin, Mod
 	}
 
 	@Override
-	protected ResourceLocation getEntityTexture(PossessedPumpkin entity) {
+	protected ResourceLocation getEntityTexture(PossessedPumpkinEntity entity) {
 		return TEXTURE;
 	}
 	
 	@Override
-	protected boolean canRenderName(PossessedPumpkin entity) {
+	protected boolean canRenderName(PossessedPumpkinEntity entity) {
 		return false;
 	}
 

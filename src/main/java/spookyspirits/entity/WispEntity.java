@@ -5,12 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -45,13 +43,13 @@ import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.registries.ForgeRegistries;
-import spookyspirits.init.SpiritEntities;
+import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpiritsConfig;
 import spookyspirits.init.SpookySpirits;
 
-public class Wisp extends FlyingEntity {
+public class WispEntity extends FlyingEntity {
 	
-	public Wisp(EntityType<? extends Wisp> type, World world) {
+	public WispEntity(EntityType<? extends WispEntity> type, World world) {
 		super(type, world);
 	}
 	
@@ -110,14 +108,14 @@ public class Wisp extends FlyingEntity {
 					int y = rand.nextInt(extraRadius + i * 2);
 					int z = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * cosine);
 					int dy = rand.nextBoolean() ? 1 : 2;
-					BlockPos p = Wisp.getBestY(this.getEntityWorld(), myPos.add(x, y, z), dy);
-					// if the chosen position is actually air, place a Will O Wisp
+					BlockPos p = WispEntity.getBestY(this.getEntityWorld(), myPos.add(x, y, z), dy);
+					// if the chosen position is actually air, place a Will O WispEntity
 					if(this.getEntityWorld().isAirBlock(p)) {
-						WillOWisp w = SpiritEntities.WILL_O_WISP.create(this.world, (CompoundNBT)null, (ITextComponent)null, (PlayerEntity)null, p, SpawnReason.MOB_SUMMONED, false, false);
+						final WillOWispEntity w = ModObjects.WILL_O_WISP.create(this.world, (CompoundNBT)null, (ITextComponent)null, (PlayerEntity)null, p, SpawnReason.MOB_SUMMONED, false, false);
 						w.setPosition(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D);
 						w.setWisp(this.getUniqueID());
 						worldIn.addEntity(w);
-						System.out.println("Spawning WillOWisp at " + p);
+						System.out.println("Spawning WillOWispEntity at " + p);
 						break;
 					}
 				}
@@ -161,14 +159,14 @@ public class Wisp extends FlyingEntity {
 //	}
 //	
 	public static ConfigValue<List<? extends String>> setupConfig(final SpiritsConfig config, final ForgeConfigSpec.Builder builder) {
-		builder.comment("Percent chance that the following Wisp actions can occur (0=disabled)");
+		builder.comment("Percent chance that the following WispEntity actions can occur (0=disabled)");
 		builder.push("wisp_actions");
 		for(final WispAction a : WispAction.ACTIONS) {
 			final ForgeConfigSpec.IntValue cfg = builder.defineInRange(a.getName() + "_chance", a.getDefaultChance(), 0, 100);
 			config.WISP_ACTION_CHANCES.put(a.getName(), cfg);
 		}
 		final ConfigValue<List<? extends String>> blacklist =
-				builder.comment("Potion effects that the Wisp should not apply")
+				builder.comment("Potion effects that the WispEntity should not apply")
 					.defineList("potion_blacklist", 
 						Lists.newArrayList(
 								Effects.WITHER.getRegistryName().toString(), Effects.LEVITATION.getRegistryName().toString(),
@@ -188,7 +186,7 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction NOTHING = new WispAction("nothing", 15) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				return true;
 			}
 		};
@@ -197,20 +195,20 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction LOOT_CHEST = new WispAction("loot_chest", 95) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				// find an empty block position
-				BlockPos pos = wisp.getPosition();
+				BlockPos pos = wispEntity.getPosition();
 				for (final Direction d : Direction.values()) {
-					final BlockState state = wisp.getEntityWorld().getBlockState(pos);
-					if (state.isAir(wisp.getEntityWorld(), pos) || state.getMaterial().isReplaceable()) {
+					final BlockState state = wispEntity.getEntityWorld().getBlockState(pos);
+					if (state.isAir(wispEntity.getEntityWorld(), pos) || state.getMaterial().isReplaceable()) {
 						break;
 					}
-					pos = wisp.getPosition().offset(d, 1 + wisp.rand.nextInt(2));
+					pos = wispEntity.getPosition().offset(d, 1 + wispEntity.rand.nextInt(2));
 				}
 				// Assume we have a valid position to place the chest (we did our best)
-				wisp.getEntityWorld().setBlockState(pos, Blocks.CHEST.getDefaultState());
+				wispEntity.getEntityWorld().setBlockState(pos, Blocks.CHEST.getDefaultState());
 				// set random loot table
-				ChestTileEntity.setLootTable(wisp.getEntityWorld(), wisp.rand, pos, getLootTable(wisp.rand));
+				ChestTileEntity.setLootTable(wispEntity.getEntityWorld(), wispEntity.rand, pos, getLootTable(wispEntity.rand));
 
 				return true;
 			}
@@ -238,32 +236,32 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction SPAWN_SKELETON = new WispAction("skeleton", 30) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
-				SkeletonEntity sk = EntityType.SKELETON.create(wisp.getEntityWorld());
-				sk.setLocationAndAngles(wisp.posX, wisp.posY, wisp.posZ, wisp.rotationYaw, wisp.rotationPitch);
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
+				SkeletonEntity sk = EntityType.SKELETON.create(wispEntity.getEntityWorld());
+				sk.setLocationAndAngles(wispEntity.posX, wispEntity.posY, wispEntity.posZ, wispEntity.rotationYaw, wispEntity.rotationPitch);
 				// armor and weapons for skeleton
-				final ItemStack helmet = EnchantmentHelper.addRandomEnchantment(wisp.rand,
-						new ItemStack(Items.CHAINMAIL_HELMET), wisp.rand.nextInt(2), true);
-				final ItemStack chest = EnchantmentHelper.addRandomEnchantment(wisp.rand,
-						new ItemStack(Items.CHAINMAIL_CHESTPLATE), wisp.rand.nextInt(2), true);
-				final ItemStack legs = EnchantmentHelper.addRandomEnchantment(wisp.rand,
-						new ItemStack(Items.CHAINMAIL_LEGGINGS), wisp.rand.nextInt(2), true);
-				final ItemStack boots = EnchantmentHelper.addRandomEnchantment(wisp.rand,
-						new ItemStack(Items.CHAINMAIL_BOOTS), wisp.rand.nextInt(2), true);
-				final ItemStack sword = EnchantmentHelper.addRandomEnchantment(wisp.rand,
-						new ItemStack(Items.IRON_SWORD), wisp.rand.nextInt(2), false);
-				sword.addEnchantment(Enchantments.SHARPNESS, 1 + wisp.rand.nextInt(3));
-				sword.addEnchantment(Enchantments.FIRE_ASPECT, 1 + wisp.rand.nextInt(2));
+				final ItemStack helmet = EnchantmentHelper.addRandomEnchantment(wispEntity.rand,
+						new ItemStack(Items.CHAINMAIL_HELMET), wispEntity.rand.nextInt(2), true);
+				final ItemStack chest = EnchantmentHelper.addRandomEnchantment(wispEntity.rand,
+						new ItemStack(Items.CHAINMAIL_CHESTPLATE), wispEntity.rand.nextInt(2), true);
+				final ItemStack legs = EnchantmentHelper.addRandomEnchantment(wispEntity.rand,
+						new ItemStack(Items.CHAINMAIL_LEGGINGS), wispEntity.rand.nextInt(2), true);
+				final ItemStack boots = EnchantmentHelper.addRandomEnchantment(wispEntity.rand,
+						new ItemStack(Items.CHAINMAIL_BOOTS), wispEntity.rand.nextInt(2), true);
+				final ItemStack sword = EnchantmentHelper.addRandomEnchantment(wispEntity.rand,
+						new ItemStack(Items.IRON_SWORD), wispEntity.rand.nextInt(2), false);
+				sword.addEnchantment(Enchantments.SHARPNESS, 1 + wispEntity.rand.nextInt(3));
+				sword.addEnchantment(Enchantments.FIRE_ASPECT, 1 + wispEntity.rand.nextInt(2));
 				sk.setItemStackToSlot(EquipmentSlotType.HEAD, helmet);
 				sk.setItemStackToSlot(EquipmentSlotType.CHEST, chest);
 				sk.setItemStackToSlot(EquipmentSlotType.LEGS, legs);
 				sk.setItemStackToSlot(EquipmentSlotType.FEET, boots);
 				sk.setItemStackToSlot(EquipmentSlotType.MAINHAND, sword);
 				for (EquipmentSlotType type : EquipmentSlotType.values()) {
-					sk.setDropChance(type, wisp.rand.nextInt(5) == 0 ? 0.8F : 0.01F);
+					sk.setDropChance(type, wispEntity.rand.nextInt(5) == 0 ? 0.8F : 0.01F);
 				}
 				sk.setAttackTarget(player);
-				wisp.getEntityWorld().addEntity(sk);
+				wispEntity.getEntityWorld().addEntity(sk);
 				return true;
 			}
 
@@ -273,16 +271,16 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction SPAWN_BATS = new WispAction("bats", 30) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				for (int i = 0, numBats = 16; i < numBats; i++) {
-					final BatEntity bat = EntityType.BAT.create(wisp.getEntityWorld());
+					final BatEntity bat = EntityType.BAT.create(wispEntity.getEntityWorld());
 					// offset position just a bit (especially upward)
-					bat.setPositionAndRotation(wisp.posX + wisp.rand.nextDouble() - 0.5D,
-							wisp.posY + wisp.rand.nextDouble() + 0.5D, 
-							wisp.posZ + wisp.rand.nextDouble() - 0.5D,
-							wisp.rotationYaw + wisp.rand.nextFloat() * 180F,
-							wisp.rotationPitch + wisp.rand.nextFloat() * 180F);
-					wisp.getEntityWorld().addEntity(bat);
+					bat.setPositionAndRotation(wispEntity.posX + wispEntity.rand.nextDouble() - 0.5D,
+							wispEntity.posY + wispEntity.rand.nextDouble() + 0.5D, 
+							wispEntity.posZ + wispEntity.rand.nextDouble() - 0.5D,
+							wispEntity.rotationYaw + wispEntity.rand.nextFloat() * 180F,
+							wispEntity.rotationPitch + wispEntity.rand.nextFloat() * 180F);
+					wispEntity.getEntityWorld().addEntity(bat);
 				}
 				return true;
 			}
@@ -293,12 +291,12 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction POTION_EFFECT_GOOD = new WispAction("beneficial_effects", 20) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				// streams all BENEFICIAL potion effects to choose from
 				final List<Effect> EFFECTS = SpiritsConfig.CONFIG.getGoodEffects();
 				for (int i = 0, numPotions = 3; i < numPotions; i++) {
-					final Effect e = EFFECTS.get(wisp.rand.nextInt(EFFECTS.size()));
-					final int len = e.isInstant() ? 1 : 8000 + wisp.rand.nextInt(4000);
+					final Effect e = EFFECTS.get(wispEntity.rand.nextInt(EFFECTS.size()));
+					final int len = e.isInstant() ? 1 : 8000 + wispEntity.rand.nextInt(4000);
 					player.addPotionEffect(new EffectInstance(e, len));
 				}
 				return true;
@@ -310,12 +308,12 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction POTION_EFFECT_BAD = new WispAction("harmful_effects", 40) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				// streams all registered HARMFUL or NEUTRAL potion effects (except levitation and wither)
 				final List<Effect> EFFECTS = SpiritsConfig.CONFIG.getBadEffects();
 				for (int i = 0, numPotions = 3; i < numPotions; i++) {
-					final Effect e = EFFECTS.get(wisp.rand.nextInt(EFFECTS.size()));
-					int len = e.isInstant() ? 1 : 500 + wisp.rand.nextInt(500);
+					final Effect e = EFFECTS.get(wispEntity.rand.nextInt(EFFECTS.size()));
+					int len = e.isInstant() ? 1 : 500 + wispEntity.rand.nextInt(500);
 					player.addPotionEffect(new EffectInstance(e, len));
 				}
 				return true;
@@ -326,7 +324,7 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction THROW_ITEMS = new WispAction("drop_inv", 10) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				player.inventory.armorInventory.forEach(i -> player.dropItem(i, true, false));
 				player.inventory.armorInventory.clear();
 				return true;
@@ -337,10 +335,10 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction ENCHANT_ITEMS = new WispAction("enchant_equipment", 10) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				for (final EquipmentSlotType s : EquipmentSlotType.values()) {
-					ItemStack i = EnchantmentHelper.addRandomEnchantment(wisp.rand, player.getItemStackFromSlot(s),
-							wisp.rand.nextInt(2), true);
+					ItemStack i = EnchantmentHelper.addRandomEnchantment(wispEntity.rand, player.getItemStackFromSlot(s),
+							wispEntity.rand.nextInt(2), true);
 					player.setItemStackToSlot(s, i);
 				}
 				return true;
@@ -351,11 +349,11 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction SPELLBOOKS = new WispAction("drop_spellbooks", 40) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
-				for (int i = 0, numBooks = 4 + wisp.rand.nextInt(8); i < numBooks; i++) {
-					ItemStack book = EnchantmentHelper.addRandomEnchantment(wisp.rand, new ItemStack(Items.BOOK),
-							2 + wisp.rand.nextInt(2), true);
-					wisp.entityDropItem(book, 0.25F);
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
+				for (int i = 0, numBooks = 4 + wispEntity.rand.nextInt(8); i < numBooks; i++) {
+					ItemStack book = EnchantmentHelper.addRandomEnchantment(wispEntity.rand, new ItemStack(Items.BOOK),
+							2 + wispEntity.rand.nextInt(2), true);
+					wispEntity.entityDropItem(book, 0.25F);
 				}
 				return true;
 			}
@@ -365,7 +363,7 @@ public class Wisp extends FlyingEntity {
 		protected static final WispAction PUMPKIN_HEAD = new WispAction("pumpkin_head", 20) {
 
 			@Override
-			protected boolean doAction(final Wisp wisp, final PlayerEntity player) {
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
 				// replace player's helmet with pumpkin
 				ItemStack item = player.getItemStackFromSlot(EquipmentSlotType.HEAD).copy();
 				player.setItemStackToSlot(EquipmentSlotType.HEAD, new ItemStack(Blocks.CARVED_PUMPKIN));
@@ -406,7 +404,7 @@ public class Wisp extends FlyingEntity {
 			return rand.nextInt(100) < getPercentChance();
 		}
 
-		protected abstract boolean doAction(final Wisp wisp, final PlayerEntity player);
+		protected abstract boolean doAction(final WispEntity wispEntity, final PlayerEntity player);
 
 		/**
 		 * @param rand   a random instance

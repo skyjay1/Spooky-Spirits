@@ -13,7 +13,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.registries.ForgeRegistries;
-import spookyspirits.entity.Wisp;
+import spookyspirits.entity.WispEntity;
 
 public final class SpiritsConfig {
 
@@ -26,7 +26,7 @@ public final class SpiritsConfig {
 
 	public SpiritsConfig(final ForgeConfigSpec.Builder builder) {
 		SpookySpirits.LOGGER.info(SpookySpirits.MODID + ": Building Config");
-		POTION_BLACKLIST = Wisp.setupConfig(this, builder);
+		POTION_BLACKLIST = WispEntity.setupConfig(this, builder);
 	}
 	
 	public boolean isEffectBlacklisted(final Effect e) {

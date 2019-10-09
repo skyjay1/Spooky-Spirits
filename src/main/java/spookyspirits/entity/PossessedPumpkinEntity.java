@@ -1,8 +1,11 @@
 package spookyspirits.entity;
 
+import java.util.Random;
+
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.LeapAtTargetGoal;
 import net.minecraft.entity.ai.goal.LookAtGoal;
@@ -15,23 +18,25 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
-public class PossessedPumpkin extends MonsterEntity {
+public class PossessedPumpkinEntity extends MonsterEntity {
 	
-	private static final DataParameter<Byte> STANDING_TICKS = EntityDataManager.createKey(PossessedPumpkin.class, DataSerializers.BYTE);
-	private static final DataParameter<Boolean> IS_STANDING_UP = EntityDataManager.createKey(PossessedPumpkin.class, DataSerializers.BOOLEAN);
+	private static final DataParameter<Byte> STANDING_TICKS = EntityDataManager.createKey(PossessedPumpkinEntity.class, DataSerializers.BYTE);
+	private static final DataParameter<Boolean> IS_STANDING_UP = EntityDataManager.createKey(PossessedPumpkinEntity.class, DataSerializers.BOOLEAN);
 
 	private static final String KEY_STANDING_TICKS = "StandingTicks";
 	private static final String KEY_IS_STANDING_UP = "IsStandingUp";
 	
 	/** Must be less than or equal to Byte.MAX_VALUE [127] **/
-	public static final int MAX_STANDING_TICKS = 6;
+	public static final int MAX_STANDING_TICKS = 12;
 	
 	private static final double attackDisSq = Math.pow(2.2D, 2);
 
-	public PossessedPumpkin(EntityType<? extends PossessedPumpkin> type, World world) {
+	public PossessedPumpkinEntity(EntityType<? extends PossessedPumpkinEntity> type, World world) {
 		super(type, world);
 		this.stepHeight = 1.0F;
 	}
@@ -208,10 +213,16 @@ public class PossessedPumpkin extends MonsterEntity {
 		return this.getDataManager().get(IS_STANDING_UP).booleanValue();
 	}
 	
+	public static boolean canSpawnHere(final EntityType<PossessedPumpkinEntity> entity, final IWorld world, final SpawnReason reason,
+			final BlockPos pos, final Random rand) {
+		System.out.println("checking canSpawnHere for possessed pumpkin! Possible spawn at " + pos);
+		return true; // TODO
+	}
+	
 	class WanderAvoidWaterGoal extends WaterAvoidingRandomWalkingGoal {
 
-		private final PossessedPumpkin entity;
-		public WanderAvoidWaterGoal(final PossessedPumpkin creature, final double speedFactorIn) {
+		private final PossessedPumpkinEntity entity;
+		public WanderAvoidWaterGoal(final PossessedPumpkinEntity creature, final double speedFactorIn) {
 			super(creature, speedFactorIn);
 			this.entity = creature;
 		}
@@ -224,8 +235,8 @@ public class PossessedPumpkin extends MonsterEntity {
 	
 	class LeapAtTargetWhenCloseGoal extends LeapAtTargetGoal {
 
-		private final PossessedPumpkin entity;
-		public LeapAtTargetWhenCloseGoal(final PossessedPumpkin leapingEntity, float leapMotionYIn) {
+		private final PossessedPumpkinEntity entity;
+		public LeapAtTargetWhenCloseGoal(final PossessedPumpkinEntity leapingEntity, float leapMotionYIn) {
 			super(leapingEntity, leapMotionYIn);
 			this.entity = leapingEntity;
 		}
@@ -239,9 +250,9 @@ public class PossessedPumpkin extends MonsterEntity {
 	
 	class LookAtTargetGoal extends LookAtGoal {
 		
-		private final PossessedPumpkin pumpkinEntity;
+		private final PossessedPumpkinEntity pumpkinEntity;
 
-		public LookAtTargetGoal(final PossessedPumpkin entityIn, final Class<? extends LivingEntity> watchTargetClass, final float maxDistance) {
+		public LookAtTargetGoal(final PossessedPumpkinEntity entityIn, final Class<? extends LivingEntity> watchTargetClass, final float maxDistance) {
 			super(entityIn, watchTargetClass, maxDistance);
 			pumpkinEntity = entityIn;
 		}
@@ -273,9 +284,9 @@ public class PossessedPumpkin extends MonsterEntity {
 	
 	class AttackGoal extends MeleeAttackGoal {
 		
-		private final PossessedPumpkin entity;
+		private final PossessedPumpkinEntity entity;
 		
-		public AttackGoal(final PossessedPumpkin creature, final double speedIn, final boolean useLongMemory) {
+		public AttackGoal(final PossessedPumpkinEntity creature, final double speedIn, final boolean useLongMemory) {
 			super(creature, speedIn, useLongMemory);
 			this.entity = creature;
 		}

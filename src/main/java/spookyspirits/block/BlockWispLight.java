@@ -34,7 +34,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import spookyspirits.entity.WillOWisp;
+import spookyspirits.entity.WillOWispEntity;
 
 /**
  * Previously written code, adapted from Extra Golems mod
@@ -71,7 +71,7 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 		// make a slightly expanded AABB to check for the golem
 		final AxisAlignedBB toCheck = new AxisAlignedBB(pos).grow(0.5D);
 		// we'll probably only ever get one golem, but it doesn't hurt to be safe and check them all
-		final List<WillOWisp> list = worldIn.getEntitiesWithinAABB(WillOWisp.class, toCheck);
+		final List<WillOWispEntity> list = worldIn.getEntitiesWithinAABB(WillOWispEntity.class, toCheck);
 
 		if (!list.isEmpty()) {
 			// light golem is nearby, schedule another update

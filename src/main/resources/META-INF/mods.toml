@@ -14,7 +14,7 @@ loaderVersion="[2.0,)"
     version="0.0.1-beta"
     displayName="Spooky Spirits"
     # multi line!
-    description='''Boo!'''
+    description='''Made for SpookyJam 2019 by skyjay1 and TheOneTraveler'''
     [[dependencies.spookyspirits]]
         modId="forge"
         mandatory=true
