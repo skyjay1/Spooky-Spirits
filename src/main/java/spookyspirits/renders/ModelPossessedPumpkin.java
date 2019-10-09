@@ -7,7 +7,6 @@ import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.client.renderer.model.ModelBox;
 import net.minecraft.util.math.MathHelper;
 import spookyspirits.entity.PossessedPumpkinEntity;
-import spookyspirits.entity.WillOWispEntity;
 
 public class ModelPossessedPumpkin extends EntityModel<PossessedPumpkinEntity> {
 	
@@ -55,27 +54,28 @@ public class ModelPossessedPumpkin extends EntityModel<PossessedPumpkinEntity> {
 	@Override
 	public void render(final PossessedPumpkinEntity entityIn, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scale) {
-		
-		GlStateManager.pushMatrix();
-		float standing = entityIn.getStandingTicksRatio() * 4.0F;
-		GlStateManager.translatef(0, -standing * scale, 0);
-		block.render(scale);
-		GlStateManager.popMatrix();
-		
+		setRotationAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
 		leg1.render(scale);
 		leg2.render(scale);
 		leg3.render(scale);
 		leg4.render(scale);
 		leg5.render(scale);
 		leg6.render(scale);
+		
+		// render head (pumpkin block)
+		float standing = entityIn.getStandingTicksRatio() * 4.0F;
+		GlStateManager.pushMatrix();
+		GlStateManager.translatef(0, standing * 0.0625F, 0);
+		block.render(scale);
+		GlStateManager.popMatrix();
 	}
 	
 	@Override
 	public void setRotationAngles(final PossessedPumpkinEntity entity, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scaleFactor) {
 		super.setRotationAngles(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor);
-		final float speed = 1.25F;
-		final float angle = 2.2F;
+		final float speed = 1.35F;
+		final float angle = 2.0F;
 		// leg angle 1
 		final float legAngle1 = MathHelper.cos(limbSwing * speed) * angle * limbSwingAmount;
 		// leg angle 2

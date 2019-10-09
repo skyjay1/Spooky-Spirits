@@ -1,6 +1,6 @@
 {
     "parent": "block/cross",
     "textures": {
-        "cross": "spookyspirits:block/spoiled_berry_bush_stage3"
+        "cross": "spookyspirits:blocks/spoiled_berry_bush_stage3"
     }
 }

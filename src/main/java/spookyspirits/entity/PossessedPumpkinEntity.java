@@ -1,11 +1,13 @@
 package spookyspirits.entity;
 
+import java.util.EnumSet;
 import java.util.Random;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.LeapAtTargetGoal;
 import net.minecraft.entity.ai.goal.LookAtGoal;
@@ -34,7 +36,7 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 	/** Must be less than or equal to Byte.MAX_VALUE [127] **/
 	public static final int MAX_STANDING_TICKS = 12;
 	
-	private static final double attackDisSq = Math.pow(2.2D, 2);
+	private static final double attackDisSq = Math.pow(2.9D, 2);
 
 	public PossessedPumpkinEntity(EntityType<? extends PossessedPumpkinEntity> type, World world) {
 		super(type, world);
@@ -44,10 +46,11 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
+		this.goalSelector.addGoal(3, new HideGoal(this));
 		this.goalSelector.addGoal(4, new AttackGoal(this, 1.0F, true));
-		this.goalSelector.addGoal(5, new LeapAtTargetWhenCloseGoal(this, 0.4F));
+		this.goalSelector.addGoal(5, new LeapAtTargetWhenCloseGoal(this, 0.35F));
 		this.goalSelector.addGoal(7, new WanderAvoidWaterGoal(this, 0.76F));
-		this.goalSelector.addGoal(8, new LookAtTargetGoal(this, PlayerEntity.class, 12.0F));
+		this.goalSelector.addGoal(8, new LookAtGoal(this, PlayerEntity.class, 12.0F));
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, true));
 	}
@@ -57,7 +60,8 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 		super.registerAttributes();
 		this.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(4.5D);
 		this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(18.0D);
-		this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double) 0.29F);
+		this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double) 0.26F);
+		this.getAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(64.0D);
 	}
 
 	@Override
@@ -68,15 +72,15 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 	}
 
 	@Override
-	public void livingTick() {
-		super.livingTick();
-		if(this.ticksExisted % 2 == 1 && this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
-			// update whether pumpkinEntity should be standing
+	protected void updateAITasks() {
+		super.updateAITasks();
+		// update whether pumpkinEntity should be standing
+		if(this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
 			if(this.getAttackTarget() != null) {
-				// update 'isTargetLooking'
+				// if target exists, stand only if pumpkin cannot be seen by target
+				// OR if the target is too close to the pumpkin
 				final double disSq = this.getDistanceSq(this.getAttackTarget());
 				final boolean canBeSeen = this.canBeSeen(this.getAttackTarget());
-				// if target is looking, only stand if target is too close					
 				this.setStandingState(!canBeSeen || disSq < attackDisSq);
 			} else {
 				// if no target at all, stand up to wander around
@@ -84,11 +88,6 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 			}
 			// update standing ticks
 			this.updateStandingTicks(1);
-		}
-		
-		// if not standing at all, hide (client + server)
-		if(!this.isStandingUp()) {
-			this.hide();
 		}
 	}
 	
@@ -105,19 +104,6 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 		super.readAdditional(compound);
 		this.setStandingTicks(compound.getByte(KEY_STANDING_TICKS));
 		this.setStandingState(compound.getBoolean(KEY_IS_STANDING_UP));
-	}
-	
-	/**
-	 * Snaps the pumpkinEntity position to the nearest block
-	 **/
-	public void hide() {
-		// snap position
-		final double x = Math.round(posX - 0.5D) + 0.5D;
-		final double z = Math.round(posZ - 0.5D) + 0.5D;
-		final float yaw = ((int) (this.rotationYaw / 90F)) * 90F + 45F;
-		this.setLocationAndAngles(x, this.posY, z, yaw, this.rotationPitch);
-		this.setPositionAndRotation(x, this.posY, z, yaw, this.rotationPitch);
-		this.setMotion(0.0D, this.getMotion().getY(), 0.0D);
 	}
 	
 	/**
@@ -166,7 +152,7 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 	}
 	
 	/**
-	 * Increments (or decrements) the STANDING_TICKS field
+	 * Increments (or decrements) the STANDING_TICKS data
 	 * @param toAdd the amount to add (may be negative)
 	 **/
 	public void addStandingTicks(final int toAdd) {
@@ -175,6 +161,9 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 		}
 	}
 	
+	/**
+	 * @param toSet the new value for standing ticks
+	 **/
 	public void setStandingTicks(final int toSet) {
 		if(toSet != this.getStandingTicks()) {
 			this.getDataManager().set(STANDING_TICKS, (byte)toSet);
@@ -216,9 +205,13 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 	public static boolean canSpawnHere(final EntityType<PossessedPumpkinEntity> entity, final IWorld world, final SpawnReason reason,
 			final BlockPos pos, final Random rand) {
 		System.out.println("checking canSpawnHere for possessed pumpkin! Possible spawn at " + pos);
-		return true; // TODO
+		 // TODO
+		return world.canBlockSeeSky(pos);
 	}
 	
+	/**
+	 * Adapted to only wander around while entity is fully standing up
+	 **/
 	class WanderAvoidWaterGoal extends WaterAvoidingRandomWalkingGoal {
 
 		private final PossessedPumpkinEntity entity;
@@ -233,6 +226,9 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 		}
 	}
 	
+	/**
+	 * Adapted to update standing state when leaping
+	 **/
 	class LeapAtTargetWhenCloseGoal extends LeapAtTargetGoal {
 
 		private final PossessedPumpkinEntity entity;
@@ -243,45 +239,70 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 
 		@Override
 		public void startExecuting() {
-			super.startExecuting();
 			entity.setStandingState(true);
+			entity.getJumpController().setJumping();
+			super.startExecuting();
 		}
 	}
 	
-	class LookAtTargetGoal extends LookAtGoal {
+	/**
+	 * Adapted to only look at target while entity is standing up
+	 **/
+	class HideGoal extends Goal {
 		
 		private final PossessedPumpkinEntity pumpkinEntity;
 
-		public LookAtTargetGoal(final PossessedPumpkinEntity entityIn, final Class<? extends LivingEntity> watchTargetClass, final float maxDistance) {
-			super(entityIn, watchTargetClass, maxDistance);
+		public HideGoal(final PossessedPumpkinEntity entityIn) {
 			pumpkinEntity = entityIn;
-		}
+			this.setMutexFlags(EnumSet.of(Flag.LOOK, Flag.MOVE, Flag.JUMP));
+		}	
 
 		@Override
 		public boolean shouldExecute() {
-			return !pumpkinEntity.isStandingUp() && super.shouldExecute();
-		}
-		
-		@Override
-		public boolean shouldContinueExecuting() {
-			return !pumpkinEntity.isStandingUp() && super.shouldContinueExecuting();
+			return !pumpkinEntity.isStandingUp();
 		}
 		
 		@Override
 		public void startExecuting() {
-			if(pumpkinEntity.isStandingUp()) {
-				super.startExecuting();
-			}
+			hide();
 		}
-
-		@Override
-		public void tick() {
-			if (pumpkinEntity.isStandingUp()) {
-				super.tick();
-			}
+		
+		/**
+		 * Snaps the pumpkinEntity position to the nearest block,
+		 * sets x and z motion to 0, and looks in a cardinal direction
+		 **/
+		public void hide() {
+			moveToNearestBlock();
+			lookStraightAhead();
+			pumpkinEntity.getNavigator().clearPath();
+		}
+		
+		/**
+		 * Moves to the nearest block position and reduces motion
+		 **/
+		public void moveToNearestBlock() {
+			final double x = Math.round(posX - 0.5D) + 0.5D;
+			final double z = Math.round(posZ - 0.5D) + 0.5D;
+			pumpkinEntity.setPosition(x, pumpkinEntity.posY, z);
+			pumpkinEntity.setMotion(pumpkinEntity.getMotion().mul(0.01D, 1.0D, 0.01D));
+			pumpkinEntity.markVelocityChanged();
+		}
+		
+		/**
+		 * Turns the entity to face in a cardinal direction
+		 **/
+		public void lookStraightAhead() {
+			final float yaw = ((Math.round(pumpkinEntity.rotationYaw / 90F)) * 90F) % 360F;
+			final float pitch = ((Math.round(pumpkinEntity.rotationPitch / 90F)) * 90F) % 360F;
+			pumpkinEntity.prevRotationYaw = yaw;
+			pumpkinEntity.prevRotationPitch = pitch;
+			pumpkinEntity.setRotation(yaw, pitch);
 		}
 	}
 	
+	/**
+	 * Adapted to only attack while entity is fully standing up
+	 **/
 	class AttackGoal extends MeleeAttackGoal {
 		
 		private final PossessedPumpkinEntity entity;

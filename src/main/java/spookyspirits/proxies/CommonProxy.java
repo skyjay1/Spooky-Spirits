@@ -40,8 +40,8 @@ public class CommonProxy {
 
 	public void registerItems(final RegistryEvent.Register<Item> event) {
 		final Food spoiledBerryFood = new Food.Builder().hunger(2).saturation(0.1F)
-				.effect(new EffectInstance(Effects.POISON, 110, 3), 1.0F)
-				.effect(new EffectInstance(Effects.HUNGER, 180, 2), 1.0F)
+				.effect(new EffectInstance(Effects.POISON, 110, 0), 0.9F)
+				.effect(new EffectInstance(Effects.HUNGER, 180, 0), 1.0F)
 				.effect(new EffectInstance(Effects.NAUSEA, 200, 1), 1.0F).build();
 		// actually register items
 		event.getRegistry().register(
