@@ -1,0 +1,15 @@
+{
+  
+  "entity.spookyspirits.phooka": "Phooka",
+  "entity.spookyspirits.possessed_pumpkin": "Possessed Pumpkin",
+  "entity.spookyspirits.wisp": "Wisp",
+  "entity.spookyspirits.willowisp": "Will O' the Wisp",
+  "block.spookyspirits.wisp_light": "Wisp Light",
+  "block.spookyspirits.spoiled_berry_bush": "Spoiled Berry Bush",
+  "item.spookyspirits.spoiled_berries": "Spoiled Berries",
+  "_comment": "Phooka Riddles",
+  "phooka.gui.offer_riddle": "Darest thou answer mine riddle, traveler?",
+  "phooka.gui.riddle1": "This is a test.\nIt's meant to be a very long riddle but for now it's just a test",
+  "phooka.gui.answer.wind": "wind",
+  "gui.give_answer": "Give Answer"
+}

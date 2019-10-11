@@ -6,10 +6,10 @@ import org.apache.logging.log4j.Logger;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,7 +17,6 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import spookyspirits.entity.WispEntity;
 import spookyspirits.proxies.ClientProxy;
 import spookyspirits.proxies.CommonProxy;
 
@@ -63,9 +62,9 @@ public class SpookySpirits {
 	}
 	
 	@SubscribeEvent
-	public static void registerTileEntity(final RegistryEvent.Register<TileEntityType<?>> event) {
-		LOGGER.debug(MODID + ": RegisterTileEntityType");
-		PROXY.registerTileEntity(event);
+	public static void registerTileEntity(final RegistryEvent.Register<ContainerType<?>> event) {
+		LOGGER.debug(MODID + ": RegisterContainerTypes");
+		PROXY.registerContainerTypes(event);
 	}
 	
 	@SubscribeEvent

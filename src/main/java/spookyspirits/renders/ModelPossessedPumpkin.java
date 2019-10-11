@@ -65,7 +65,7 @@ public class ModelPossessedPumpkin extends EntityModel<PossessedPumpkinEntity> {
 		// render head (pumpkin block)
 		float standing = entityIn.getStandingTicksRatio() * 4.0F;
 		GlStateManager.pushMatrix();
-		GlStateManager.translatef(0, standing * 0.0625F, 0);
+		GlStateManager.translatef(0, -standing * scale, 0); // scale = 0.0625F
 		block.render(scale);
 		GlStateManager.popMatrix();
 	}

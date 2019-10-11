@@ -5,12 +5,12 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.BlockNamedItem;
 import net.minecraft.item.Food;
 import net.minecraft.item.Item;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
-import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
 import spookyspirits.block.BlockWispLight;
@@ -102,7 +102,7 @@ public class CommonProxy {
 	
 	public void registerEntityRenders() { }
 	
-	public void registerTileEntity(final RegistryEvent.Register<TileEntityType<?>> event) {
+	public void registerContainerTypes(final RegistryEvent.Register<ContainerType<?>> event) {
 		
 	}
 

@@ -33,6 +33,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import spookyspirits.gui.GuiLoader;
 import spookyspirits.init.ModObjects;
+import spookyspirits.util.PhookaRiddle;
+import spookyspirits.util.PhookaRiddles;
 
 /*
  * 
@@ -125,8 +127,8 @@ public class PhookaEntity extends MonsterEntity {
 	
 	@Override
 	public boolean processInteract(final PlayerEntity player, final Hand hand) {
-		if(player.getEntityWorld().isRemote && this.getDespawningTicks() < 0 && player.getHeldItem(hand).isEmpty()) {
-			GuiLoader.loadPhookaGui(player);
+		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && player.getHeldItem(hand).isEmpty()) {
+			GuiLoader.loadPhookaGui(this, player, this.getRiddleFor(player));
 			return true;
 		}
 		return super.processInteract(player, hand);
@@ -147,7 +149,7 @@ public class PhookaEntity extends MonsterEntity {
 	
 	/**
 	 * Updates the number of ticks since entity
-	 * started despawning
+	 * started despawning. Set to 1 to begin despawning
 	 * @param toSet the new value
 	 **/
 	public void setDespawningTicks(final int toSet) {
@@ -187,6 +189,11 @@ public class PhookaEntity extends MonsterEntity {
 	 **/
 	private boolean clearEffects(final PlayerEntity player) {
 		return false;
+	}
+	
+	private PhookaRiddle getRiddleFor(final PlayerEntity player) {
+		// TODO
+		return PhookaRiddles.getByName("air");
 	}
 
 	public static boolean canSpawnHere(EntityType<PhookaEntity> entity, IWorld world, SpawnReason reason,
