@@ -1,7 +1,5 @@
 package spookyspirits.gui;
 
-import java.util.List;
-
 import com.mojang.blaze3d.platform.GlStateManager;
 
 import net.minecraft.client.Minecraft;
@@ -11,13 +9,13 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import spookyspirits.entity.PhookaEntity;
 import spookyspirits.init.SpookySpirits;
+import spookyspirits.util.CPhookaGuiPacket;
 import spookyspirits.util.PhookaRiddle;
 
 @OnlyIn(Dist.CLIENT)
@@ -31,13 +29,12 @@ public class PhookaGui extends Screen {
 	////// [ ] phooka face icon
 	//// [X] first screen offers to challenge riddle
 	////// [X] buttons for yes and no, ESC exits GUI
-	//// [ ] second screen shows riddle and text box
-	////// [ ] typing in text box shows text
-	////// [ ] supports backspace to remove and carriage return to submit
+	//// [X] second screen shows riddle and multiple choice answers
 	//// [ ] third screen shows the result
+	////// [X] hides answers
 	////// [ ] either a happy or angry phooka icon
 	////// [ ] triggers a noise and the phooka's despawning
-	////// [ ] gives player either good effect or bad effect
+	////// [ ] gives player either good effect or bad effect through packets
 	////// [ ] automatically closes gui after a few seconds
 	
 	protected static final ResourceLocation TEXTURE = new ResourceLocation(SpookySpirits.MODID, "textures/gui/phooka_riddle.png");
@@ -78,7 +75,7 @@ public class PhookaGui extends Screen {
 	protected static final int OPTIONS_START_X = 34;
 	protected static final int OPTIONS_START_Y = 132;
 	
-	protected static final int OPTIONS_TEXT_WIDTH = 56;
+	protected static final int OPTIONS_TEXT_WIDTH = 50;
 	
 	private Button buttonYes;
 	private Button buttonNo;
@@ -90,7 +87,7 @@ public class PhookaGui extends Screen {
 	private int page = 0;
 		
 	private boolean isClosing = false;
-	private long ticksUntilClose = 60;
+	private long ticksUntilClose = 30;
 	
 	private final PhookaEntity phooka;
 	private final PlayerEntity player;
@@ -119,14 +116,15 @@ public class PhookaGui extends Screen {
 		this.optionButtons = new Button[4];
 		x = BG_START_X + OPTIONS_START_X;
 		y = BG_START_Y + OPTIONS_START_Y;
-		optionButtons[0] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 0, "todo1", x, y));
+		final String[] options = riddle.getAnswerTranslationKeys();
+		optionButtons[0] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 0, options[0], x, y));
 		x = BG_START_X + OPTIONS_START_X + OPTIONS_WIDTH + OPTIONS_TEXT_WIDTH + SEP + 2;
-		optionButtons[1] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 1, "todo2", x, y));
+		optionButtons[1] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 1, options[1], x, y));
 		x = BG_START_X + OPTIONS_START_X;
 		y = BG_START_Y + OPTIONS_START_Y + OPTIONS_HEIGHT + SEP;
-		optionButtons[2] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 2, "todo3", x, y));
+		optionButtons[2] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 2, options[2], x, y));
 		x = BG_START_X + OPTIONS_START_X + OPTIONS_WIDTH + OPTIONS_TEXT_WIDTH + SEP + 2;
-		optionButtons[3] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 3, "todo4", x, y));
+		optionButtons[3] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 3, options[3], x, y));
 
 		
 		this.updateButtons();
@@ -159,19 +157,11 @@ public class PhookaGui extends Screen {
 		// draw page-specific details
 		if(this.page == 0) {
 			// draw riddle text in box
-			drawText("phooka.gui.offer_riddle");
+			drawText("phooka.offer_riddle");
 		} else if(this.page == 1) {
 			updateBGPos();
-//			x = BG_START_X + ENTRY_START_X;
-//			y = BG_START_Y + ENTRY_START_Y;
-//			// draw text entry box
-//			this.getMinecraft().getTextureManager().bindTexture(TEXTURE);
-//			this.blit(x, y, ENTRY_TEXTURE_X, ENTRY_TEXTURE_Y, ENTRY_WIDTH, ENTRY_HEIGHT);
 			// draw riddle text
-			drawText(this.riddle.getTranslationKey());
-			// draw current text (with flashing pipe char '|' as cursor
-			//final String renderedAnswer = (this.ticksOpen / 15) % 2 == 0 ? answer : answer.concat("|");
-			//this.font.drawString(renderedAnswer, x + 12, y + 12, 0);
+			drawText(this.riddle.getRiddleTranslationKey());
 		}
 		
 		// draw buttons, etc.
@@ -209,20 +199,22 @@ public class PhookaGui extends Screen {
 			totalLines += this.font.getWordWrappedHeight(line, TEXT_WIDTH);
 		}
 		
-		// determine the number of pixels required to fit all lines inside the box
-		float scale = totalLines > TEXT_HEIGHT ? 0.5F : 1.0F;
+		// determine the scale required to fit all lines inside the box (0.5 or 1.0)
+		float scale = (totalLines > TEXT_HEIGHT * 0.9F) ? 0.5F : 1.0F;
 		// scale everything as needed
 		GlStateManager.pushMatrix();
 		GlStateManager.scalef(scale, scale, scale);
 		// draw the translated text lines in the box with the appropriate scale
+		int currentLine = 0;
 		for(int stanzaNum = 0, numStanzas = translated.length; stanzaNum < numStanzas; stanzaNum++) {
+			// get the current stanza (may take up multiple lines on its own)
 			final String stanza = translated[stanzaNum];
-			int startY = BG_START_Y + TEXT_START_Y + (int)(stanzaNum * this.font.FONT_HEIGHT * scale);
-			List<String> lines = this.font.listFormattedStringToWidth(stanza, (int)(TEXT_WIDTH / scale));
-			for(int lineNum = 0, reps = lines.size(); lineNum < reps; lineNum++) {
-				this.font.drawString(lines.get(lineNum), (TEXT_START_X + BG_START_X) / scale, 
-						(startY + this.font.FONT_HEIGHT * lineNum) / scale, 0);
-			}
+			// determine where to start the stanza
+			int startX = BG_START_X + TEXT_START_X;
+			int startY = BG_START_Y + TEXT_START_Y + (int)(currentLine * this.font.FONT_HEIGHT * scale);
+			// draw split (wrapped) stanza
+			this.font.drawSplitString(stanza, startX, startY, (int)(TEXT_WIDTH / scale), 0);
+			currentLine += this.font.getWordWrappedHeight(stanza, (int)(TEXT_WIDTH / scale)) / this.font.FONT_HEIGHT / scale;
 		}
 		// unscale text
 		GlStateManager.popMatrix();
@@ -248,7 +240,8 @@ public class PhookaGui extends Screen {
 	
 	public void submitAnswer(final int id) {
 		this.isClosing = true;
-		// TODO SEND PACKET
+		this.minecraft.getConnection().sendPacket(new CPhookaGuiPacket(this.riddle.getName(), (byte)id));
+		setPage(2);
 	}
 	
 	class MultipleChoiceButton extends Button {
@@ -272,7 +265,7 @@ public class PhookaGui extends Screen {
 		@Override
 		public void render(int mouseX, int mouseY, float partialTicks) {
 			if (this.visible) {
-				this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width + OPTIONS_TEXT_WIDTH + SEP && mouseY < this.y + this.height;
+				this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
 				Minecraft.getInstance().getTextureManager().bindTexture(TEXTURE);
 				GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
 				// draw icon

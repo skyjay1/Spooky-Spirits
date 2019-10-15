@@ -10,6 +10,7 @@ import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,6 +18,8 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.simple.SimpleChannel;
 import spookyspirits.proxies.ClientProxy;
 import spookyspirits.proxies.CommonProxy;
 
@@ -37,6 +40,8 @@ public class SpookySpirits {
 	};
 
 	public static final Logger LOGGER = LogManager.getFormatterLogger(MODID);
+	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
+			new ResourceLocation(MODID, "channel"), () -> MODID, (s) -> s.equals(MODID), (s) -> s.equals(MODID));
 	
 	public SpookySpirits() {
 		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SpiritsConfig.SPEC);

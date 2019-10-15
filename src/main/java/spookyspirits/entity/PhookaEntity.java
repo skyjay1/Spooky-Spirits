@@ -3,6 +3,8 @@ package spookyspirits.entity;
 import java.util.List;
 import java.util.Random;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SweetBerryBushBlock;
@@ -24,6 +26,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -42,9 +45,8 @@ import spookyspirits.util.PhookaRiddles;
  * [ ] PhookaEntity would spawn in all forest type biomes using Forge's BiomeDict. 
  * [X] it could turn any berries laying on the ground or growing on a bush into spoiled berries. 
  * [X] wherever the phooka spawned, it would sit waiting for the playing to interact with it. 
- * [ ] interacting with a phooka brings up a GUI which is a riddle minigame, 
- * [ ] it selects from several pre-set riddles, you fill in the answer that you think is correct 
- * in a one-word fill in the blank. 
+ * [X] interacting with a phooka brings up a GUI which is a riddle minigame, 
+ * [X] it selects from several pre-set riddles, you choose from multiple answers
  * [ ] depending on the nature of the riddle, the phooka would bless you with certain effects 
  * which would last for a few days, 
  * [ ] it would also remove any curses blighted upon the player no matter what riddle the player solves. 
@@ -68,14 +70,9 @@ public class PhookaEntity extends MonsterEntity {
 	protected void registerGoals() {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
-		// TODO 
-		// make goal that tracks player who opens GUI, 
-		// then applies blessings / curses and despawns entity 
-		// after player answers a riddle and closes the GUI
-
 		this.goalSelector.addGoal(6, new LookAtGoal(this, PlayerEntity.class, 6.0F));
 		this.goalSelector.addGoal(7, new LookRandomlyGoal(this));
-		this.goalSelector.addGoal(8, new SpoilBerriesGoal(this, 5));
+		this.goalSelector.addGoal(8, new SpoilBerriesGoal(this, rand.nextInt(3) + 3));
 
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 	}
@@ -98,21 +95,34 @@ public class PhookaEntity extends MonsterEntity {
 	@Override
 	public void livingTick() {
 		super.livingTick();
-		if(this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
-			// partway through despawning, play sound
-			if(this.getDespawningTicks() == MAX_DESPAWNING_TICKS / 2) {
-				this.playSound(SoundEvents.ENTITY_WITCH_CELEBRATE, 
-						0.8F + 0.2F * rand.nextFloat(), 0.9F + 0.2F * rand.nextFloat());
-			}
-			// if the entity is despawning, increment despawning ticks until it's gone
-			if(this.isDespawning()) {
-				this.setDespawningTicks(this.getDespawningTicks() + 1);
-				// if despawning ticks reaches max, despawn
-				if(this.getDespawningTicks() > MAX_DESPAWNING_TICKS) {
-					this.remove();
+		if(this.isAlive()) {
+			if(this.isServerWorld() && !this.world.isRemote) {
+				// partway through despawning, play sound
+				if(this.getDespawningTicks() == MAX_DESPAWNING_TICKS / 2) {
+					this.playSound(SoundEvents.ENTITY_WITCH_CELEBRATE, 
+							0.8F + 0.2F * rand.nextFloat(), 0.9F + 0.2F * rand.nextFloat());
+				}
+				// if the entity is despawning, increment despawning ticks until it's gone
+				if(this.isDespawning()) {
+					this.setDespawningTicks(this.getDespawningTicks() + 1);
+					// if despawning ticks reaches max, despawn
+					if(this.getDespawningTicks() > MAX_DESPAWNING_TICKS) {
+						this.remove();
+					}
+				}
+			} else {
+				// spawn particles
+				if(this.isDespawning() && this.getDespawningTicks() > MAX_DESPAWNING_TICKS / 2) {
+					this.world.addParticle(ParticleTypes.HAPPY_VILLAGER, 
+							this.posX + rand.nextDouble() * 0.5D - 0.25D, 
+							this.posY + 0.25D + rand.nextDouble() * 1.25D, 
+							this.posZ + rand.nextDouble() * 0.5D - 0.25D, 
+							rand.nextDouble() * 0.1D - 0.05D,
+							rand.nextDouble() * 0.35D,
+							rand.nextDouble() * 0.1D - 0.05D);
 				}
 			}
-		}
+		}		
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -128,7 +138,10 @@ public class PhookaEntity extends MonsterEntity {
 	@Override
 	public boolean processInteract(final PlayerEntity player, final Hand hand) {
 		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && player.getHeldItem(hand).isEmpty()) {
-			GuiLoader.loadPhookaGui(this, player, this.getRiddleFor(player));
+			final PhookaRiddle riddle = this.getRiddleFor(player);
+			if(riddle != null) {
+				GuiLoader.loadPhookaGui(this, player, riddle);
+			}
 			return true;
 		}
 		return super.processInteract(player, hand);
@@ -171,29 +184,20 @@ public class PhookaEntity extends MonsterEntity {
 	public boolean isDespawning() {
 		return getDespawningTicks() > 0;
 	}
-	
-	/**
-	 * Gives a special Phooka Effect to the player based on their current effects.
-	 * @param player the player
-	 * @param isGoodEffect whether the effect should be a blessing instead of a curse
-	 * @return true if an effect was successfully given to the player
-	 **/
-	private boolean giveEffect(final PlayerEntity player, final boolean isGoodEffect) {
-		return false;
-	}
-	
+
 	/**
 	 * Removes all Phooka Effects from the player
 	 * @param player the player
 	 * @return true if the effects were successfully removed
 	 **/
 	private boolean clearEffects(final PlayerEntity player) {
+		// TODO
 		return false;
 	}
 	
+	@Nullable
 	private PhookaRiddle getRiddleFor(final PlayerEntity player) {
-		// TODO
-		return PhookaRiddles.getByName("air");
+		return PhookaRiddles.getRandom(rand);
 	}
 
 	public static boolean canSpawnHere(EntityType<PhookaEntity> entity, IWorld world, SpawnReason reason,

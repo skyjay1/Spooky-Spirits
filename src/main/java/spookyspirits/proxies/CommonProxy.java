@@ -84,7 +84,7 @@ public class CommonProxy {
 		
 		event.getRegistry().register(
 				EntityType.Builder.create(FomorEntity::new, EntityClassification.WATER_CREATURE)
-					.size(0.5F, 0.95F)
+					.size(0.35F, 0.85F).immuneToFire()
 					.build("fomor").setRegistryName(SpookySpirits.MODID, "fomor")
 		);
 		
