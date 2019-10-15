@@ -16,6 +16,7 @@ import net.minecraftforge.event.RegistryEvent;
 import spookyspirits.block.BlockWispLight;
 import spookyspirits.block.SpoiledBerryBush;
 import spookyspirits.entity.FlyingSkull;
+import spookyspirits.entity.FomorEntity;
 import spookyspirits.entity.PhookaEntity;
 import spookyspirits.entity.PossessedPumpkinEntity;
 import spookyspirits.entity.WillOWispEntity;
@@ -79,6 +80,12 @@ public class CommonProxy {
 				EntityType.Builder.create(PhookaEntity::new, EntityClassification.CREATURE)
 					.size(0.8F, 1.4F)
 					.build("phooka").setRegistryName(SpookySpirits.MODID, "phooka")
+		);
+		
+		event.getRegistry().register(
+				EntityType.Builder.create(FomorEntity::new, EntityClassification.WATER_CREATURE)
+					.size(0.5F, 0.95F)
+					.build("fomor").setRegistryName(SpookySpirits.MODID, "fomor")
 		);
 		
 		registerEntitySpawns(); // TODO call this from somewhere else?

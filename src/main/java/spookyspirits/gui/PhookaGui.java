@@ -258,7 +258,7 @@ public class PhookaGui extends Screen {
 		private String translationKey;
 
 		public MultipleChoiceButton(final PhookaGui theGui, final int idIn, final String langKey, final int x, final int y) {
-			super(x, y, OPTIONS_WIDTH, OPTIONS_HEIGHT, "", b -> {});
+			super(x, y, OPTIONS_WIDTH + OPTIONS_TEXT_WIDTH + SEP, OPTIONS_HEIGHT, "", b -> {});
 			this.gui = theGui;
 			this.id = idIn;
 			this.translationKey = langKey;

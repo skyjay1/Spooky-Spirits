@@ -1,14 +1,8 @@
 package spookyspirits.proxies;
 
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
-import spookyspirits.entity.FlyingSkull;
-import spookyspirits.entity.PhookaEntity;
-import spookyspirits.entity.PossessedPumpkinEntity;
-import spookyspirits.entity.WillOWispEntity;
-import spookyspirits.renders.RenderFlyingSkull;
-import spookyspirits.renders.RenderPhooka;
-import spookyspirits.renders.RenderPossessedPumpkin;
-import spookyspirits.renders.RenderWillOWisp;
+import spookyspirits.client.renders.*;
+import spookyspirits.entity.*;
 
 public class ClientProxy extends CommonProxy {
 	
@@ -20,5 +14,6 @@ public class ClientProxy extends CommonProxy {
 		RenderingRegistry.registerEntityRenderingHandler(WillOWispEntity.class, RenderWillOWisp::new);
 		RenderingRegistry.registerEntityRenderingHandler(PossessedPumpkinEntity.class, RenderPossessedPumpkin::new);
 		RenderingRegistry.registerEntityRenderingHandler(PhookaEntity.class, RenderPhooka::new);
+		RenderingRegistry.registerEntityRenderingHandler(FomorEntity.class, RenderFomor::new);
 	}
 }

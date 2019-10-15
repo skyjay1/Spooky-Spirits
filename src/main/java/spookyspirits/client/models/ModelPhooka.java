@@ -1,4 +1,4 @@
-package spookyspirits.renders;
+package spookyspirits.client.models;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 

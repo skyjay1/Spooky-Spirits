@@ -1,4 +1,4 @@
-package spookyspirits.renders;
+package spookyspirits.client.renders;
 
 import java.util.Random;
 
@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import spookyspirits.client.models.ModelPossessedPumpkin;
 import spookyspirits.entity.PossessedPumpkinEntity;
 import spookyspirits.init.SpookySpirits;
 

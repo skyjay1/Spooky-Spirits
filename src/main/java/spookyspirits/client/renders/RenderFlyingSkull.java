@@ -1,8 +1,9 @@
-package spookyspirits.renders;
+package spookyspirits.client.renders;
 
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.util.ResourceLocation;
+import spookyspirits.client.models.ModelFlyingSkull;
 import spookyspirits.entity.FlyingSkull;
 
 public class RenderFlyingSkull extends LivingRenderer<FlyingSkull, ModelFlyingSkull> {
