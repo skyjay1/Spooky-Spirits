@@ -143,7 +143,7 @@ public class WispEntity extends FlyingEntity {
 	public static BlockPos getBestY(final World world, BlockPos p, int dy) {
 		int attempts = 6;
 		dy = Math.max(1, dy);
-		while(world.isAirBlock(p.down(dy)) && attempts-- > 0) {
+		while(world.isAirBlock(p.down(dy)) && attempts-- > 0 && p.getY() - dy > 0) {
 			p = p.down(dy);
 		}
 		return p;

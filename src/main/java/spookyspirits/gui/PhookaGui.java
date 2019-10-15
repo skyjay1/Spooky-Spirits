@@ -55,13 +55,6 @@ public class PhookaGui extends Screen {
 	protected static final int FACE_HEIGHT = 47;
 	protected static final int FACE_START_X = 28;
 	protected static final int FACE_START_Y = 28;
-	
-//	protected static final int ENTRY_TEXTURE_X = FACE_TEXTURE_X + FACE_WIDTH + SEP;
-//	protected static final int ENTRY_TEXTURE_Y = BG_TEXTURE_Y + BG_HEIGHT + SEP;
-//	protected static final int ENTRY_WIDTH = 136;
-//	protected static final int ENTRY_HEIGHT = 35;
-//	protected static final int ENTRY_START_X = 35;
-//	protected static final int ENTRY_START_Y = 130;
 
 	protected static final int TEXT_WIDTH = 70;
 	protected static final int TEXT_HEIGHT = 85;

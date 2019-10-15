@@ -9,7 +9,11 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.monster.PhantomEntity;
+import net.minecraft.entity.monster.SkeletonEntity;
 import net.minecraft.entity.passive.horse.HorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -18,6 +22,13 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.potion.PotionUtils;
 import net.minecraft.potion.Potions;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
 import spookyspirits.init.SpookySpirits;
 
 public final class PhookaRiddles {
@@ -99,7 +110,7 @@ public final class PhookaRiddles {
 		register(PhookaRiddle.Builder.create("fire1").setAnswer("block.minecraft.fire")
 				.setOptions("fish", "block.minecraft.grass", "darkness")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 20000, 4)))
+				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 20000, 1)))
 				.setCurse(p -> p.setFire(15)).build());
 
 		register(PhookaRiddle.Builder.create("map1").setAnswer("item.minecraft.filled_map")
@@ -147,80 +158,72 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.LIGHT_GRAY_BED)))
 				.setCurse(p -> {
-					// TODO
+					final PhantomEntity phantom = EntityType.PHANTOM.create(p.getEntityWorld());
+					phantom.setPosition(p.posX, p.posY + 20, p.posZ);
+					phantom.setAttackTarget(p);
+					p.getEntityWorld().addEntity(phantom);
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("water").setAnswer("blocks.minecraft.water")
 				.setOptions("entity.minecraft.ocelot", "entity.minecraft.horse", "block.minecraft.fire")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(p -> {
+				.setBlessing(new PhookaGiveItem(new ItemStack(Items.WATER_BUCKET), new ItemStack(Items.WATER_BUCKET),
+						new ItemStack(Items.WATER_BUCKET), new ItemStack(Items.WATER_BUCKET)))
+				.setCurse(p -> {
 					// TODO
-				}).setCurse(p -> {
-					// TODO 
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("hook").setAnswer("hook")
 				.setOptions("item.minecraft.bread", "item.minecraft.spider_eye", "block.minecraft.cobweb")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
+				.setBlessing(new PhookaGiveItem(
+						enchant(enchant(new ItemStack(Items.FISHING_ROD), Enchantments.LURE, 2), Enchantments.LUCK_OF_THE_SEA, 3)))
+				.setCurse(p -> {
 					// TODO 
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("coffin").setAnswer("coffin")
 				.setOptions("entity.minecraft.boat", "item.minecraft.book", "candle")
 				.setType(PhookaRiddle.Type.HARD)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
-					// TODO 
+				.setBlessing(new PhookaGiveItem(new ItemStack(Items.TOTEM_OF_UNDYING)))
+				.setCurse(p -> {
+					final SkeletonEntity sk = EntityType.SKELETON.create(p.getEntityWorld());
+					sk.setPosition(p.posX, p.posY, p.posZ);
+					sk.setAttackTarget(p);
+					p.getEntityWorld().addEntity(sk);
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("sponge").setAnswer("block.minecraft.sponge")
 				.setOptions("fish", "block.minecraft.fire", "item.minecraft.bucket")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
+				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.RESISTANCE, 30000, 1)))
+				.setCurse(p -> {
 					// TODO 
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("fire2").setAnswer("block.minecraft.fire")
 				.setOptions("candle", "biome.minecraft.the_void", "entity.minecraft.husk")
 				.setType(PhookaRiddle.Type.HARD)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
-					// TODO 
-				}).build());
+				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 40000, 1)))
+				.setCurse(p -> p.setFire(15)).build());
 		
 		register(PhookaRiddle.Builder.create("fire3").setAnswer("block.minecraft.fire")
 				.setOptions("block.minecraft.grass", "entity.minecraft.zombie", "wind")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
-					// TODO 
-				}).build());
+				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 30000, 1)))
+				.setCurse(p -> p.setFire(15)).build());
 		
 		register(PhookaRiddle.Builder.create("wind").setAnswer("wind")
 				.setOptions("entity.minecraft.lightning_bolt", "block.minecraft.fire", "tree")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
-					// TODO 
-				}).build());
+				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.SPEED, 40000, 2)))
+				.setCurse(new PhookaGiveEffect(new EffectInstance(Effects.LEVITATION, 600, 0))).build());
 		
 		register(PhookaRiddle.Builder.create("eye").setAnswer("eye")
 				.setOptions("biome.minecraft.river", "biome.minecraft.ocean", "block.minecraft.player_head")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
-					// TODO 
-				}).build());
+				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.NIGHT_VISION, 20000, 0)))
+				.setCurse(new PhookaGiveEffect(new EffectInstance(Effects.BLINDNESS, 1000, 0))).build());
 		
 		register(PhookaRiddle.Builder.create("horse").setAnswer("entity.minecraft.horse")
 				.setOptions("entity.minecraft.boat", "entity.minecraft.rabbit", "entity.minecraft.pig")
@@ -245,7 +248,8 @@ public final class PhookaRiddles {
 				.setBlessing(p -> {
 					// TODO
 				}).setCurse(p -> {
-					// TODO 
+					long dayTime = p.getEntityWorld().getDayTime();
+					p.getEntityWorld().setDayTime(dayTime - (dayTime % 24000L) - 12000L);
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("candle").setAnswer("candle")
@@ -267,8 +271,90 @@ public final class PhookaRiddles {
 		register(PhookaRiddle.Builder.create("pen").setAnswer("pen")
 				.setOptions("item.minecraft.emerald", "entity.minecraft.witch", "shadow")
 				.setType(PhookaRiddle.Type.HARD)
-				.setBlessing(new PhookaGiveItem(new ItemStack(Items.INK_SAC, 16))).setCurse(p -> {
+				.setBlessing(new PhookaGiveItem(new ItemStack(Items.INK_SAC, 64))).setCurse(p -> {
 					// TODO a squid is stuck on your head, limiting your vision
 				}).build());
+	}
+	
+	private static ItemStack enchant(final ItemStack i, final Enchantment e, final int l) {
+		i.addEnchantment(e, l);
+		return i;
+	}
+	
+	public static class PhookaGiveEffect implements Consumer<PlayerEntity> {
+		
+		private final EffectInstance[] effects;
+		
+		public PhookaGiveEffect(final EffectInstance... e) {
+			effects = e;
+		}
+		
+		@Override
+		public void accept(PlayerEntity t) {
+			for(final EffectInstance e : effects) {
+				t.addPotionEffect(e);
+			}
+		}
+	}
+	
+	public static class PhookaGiveItem implements Consumer<PlayerEntity> {
+		
+		private final ItemStack[] items;
+		
+		public PhookaGiveItem(final ItemStack... i) {
+			items = i;
+		}
+		@Override
+		public void accept(PlayerEntity t) {
+			for(final ItemStack i : items) {
+				t.dropItem(i.copy(), true);
+			}
+		}
+	}
+	
+	public static class PhookaTeleportPlayer implements Consumer<PlayerEntity> {
+
+		private final int min;
+		private final int max;
+
+		public PhookaTeleportPlayer(final int minRange, final int maxRange) {
+			min = minRange;
+			max = maxRange;
+		}
+
+		@Override
+		public void accept(PlayerEntity t) {
+			final BlockPos origin = t.getPosition();
+			BlockPos p;
+			int x;
+			int z;
+			int attemptsLeft = 30;
+			// try to teleport the player until it works, or you fail too many times
+			do {
+				x = min + t.getEntityWorld().getRandom().nextInt(max);
+				z = min + t.getEntityWorld().getRandom().nextInt(max);
+				if (t.getEntityWorld().getRandom().nextBoolean()) {
+					x *= -1;
+				}
+				if (t.getEntityWorld().getRandom().nextBoolean()) {
+					z *= -1;
+				}
+				p = getFloorY(t.getEntityWorld(), origin.add(x, 200, z));
+			} while (attemptsLeft-- > 0 && t.attemptTeleport(p.getX() + 0.5D, p.getY(), p.getZ() + 0.5D, false));
+
+			if (attemptsLeft > 0) {
+				// assume success
+				t.getEntityWorld().playSound((PlayerEntity) null, p.getX(), p.getY(), p.getZ(),
+						SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, 1.0F, 1.0F);
+				t.playSound(SoundEvents.ENTITY_ENDERMAN_TELEPORT, 1.0F, 1.0F);
+			}
+		}
+
+		private static BlockPos getFloorY(final World world, BlockPos p) {
+			while (world.isAirBlock(p.down()) && p.getY() > 0) {
+				p = p.down();
+			}
+			return p;
+		}
 	}
 }
