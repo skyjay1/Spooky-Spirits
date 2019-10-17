@@ -34,14 +34,21 @@ public final class ModObjects {
 	@ObjectHolder("spoiled_berries")
 	public static final Item SPOILED_BERRIES = null;
 	
-	@ObjectHolder("phooka_blessing_invisibility")
+	@ObjectHolder("sunshine_scroll")
+	public static final Item SUNSHINE_SCROLL = null;
+	
+	@ObjectHolder(PhookaEffect.Invisibility.NAME)
 	public static final Effect PHOOKA_BLESSING_INVISIBILITY = null;
-
-	@ObjectHolder("phooka_curse_sponge")
-	public static final Effect PHOOKA_CURSE_SPONGE = null;
 	
 	@ObjectHolder("phooka_blessing_fortune")
 	public static final Effect PHOOKA_BLESSING_FORTUNE = null;
+
+	@ObjectHolder(PhookaEffect.Sponge.NAME)
+	public static final Effect PHOOKA_CURSE_SPONGE = null;
+	
+	@ObjectHolder(PhookaEffect.Eggs.NAME)
+	public static final Effect PHOOKA_CURSE_EGGS = null;
+	
 
 
 }

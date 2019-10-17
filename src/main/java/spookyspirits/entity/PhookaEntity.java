@@ -35,6 +35,7 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import spookyspirits.effect.PhookaEffect;
 import spookyspirits.gui.GuiLoader;
 import spookyspirits.init.ModObjects;
 import spookyspirits.util.PhookaRiddle;
@@ -139,9 +140,9 @@ public class PhookaEntity extends MonsterEntity {
 	@Override
 	public boolean processInteract(final PlayerEntity player, final Hand hand) {
 		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && player.getHeldItem(hand).isEmpty()) {
-			// DEBUG:
-			player.addPotionEffect(new EffectInstance(ModObjects.PHOOKA_BLESSING_INVISIBILITY, 500));
-//			return false;
+			// DEBUG
+			//player.addPotionEffect(new EffectInstance(ModObjects.PHOOKA_CURSE_EGGS, PhookaEffect.Eggs.INTERVAL * 16 + 2));
+			
 			final PhookaRiddle riddle = getRiddleFor(player);
 			if(riddle != null) {
 				GuiLoader.loadPhookaGui(this, player, riddle);
@@ -187,16 +188,6 @@ public class PhookaEntity extends MonsterEntity {
 	 **/
 	public boolean isDespawning() {
 		return getDespawningTicks() > 0;
-	}
-
-	/**
-	 * Removes all Phooka Effects from the player
-	 * @param player the player
-	 * @return true if the effects were successfully removed
-	 **/
-	private boolean clearEffects(final PlayerEntity player) {
-		// TODO
-		return false;
 	}
 	
 	@Nullable

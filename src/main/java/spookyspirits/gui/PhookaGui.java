@@ -86,6 +86,8 @@ public class PhookaGui extends Screen {
 	private final PhookaEntity phooka;
 	private final PlayerEntity player;
 	private final PhookaRiddle riddle;
+	
+	private int answer = 0;
 
 	protected PhookaGui(final PhookaEntity phookaIn, final PlayerEntity playerIn, final PhookaRiddle riddleIn) {
 		super(new TranslationTextComponent("entity.spookyspirits.phooka.name"));
@@ -119,7 +121,6 @@ public class PhookaGui extends Screen {
 		optionButtons[2] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 2, options[2], x, y));
 		x = BG_START_X + OPTIONS_START_X + OPTIONS_WIDTH + OPTIONS_TEXT_WIDTH + SEP + 2;
 		optionButtons[3] = this.addButton(new PhookaGui.MultipleChoiceButton(this, 3, options[3], x, y));
-
 		
 		this.updateButtons();
 	}
@@ -165,6 +166,8 @@ public class PhookaGui extends Screen {
 	@Override
 	public void tick() {
 		if(this.isClosing && this.ticksUntilClose-- <= 0) {
+			this.minecraft.getConnection().sendPacket(new CPhookaGuiPacket(this.riddle.getName(), (byte)answer));
+			this.phooka.setDespawningTicks(1);
 			this.onClose();
 		}
 	}
@@ -193,21 +196,21 @@ public class PhookaGui extends Screen {
 		}
 		
 		// determine the scale required to fit all lines inside the box (0.5 or 1.0)
-		float scale = (totalHeight > TEXT_HEIGHT * 0.9F) ? 0.75F : 1.0F;
+		float scale = (totalHeight > TEXT_HEIGHT * 0.9F) ? 0.5F : 1.0F;
 		// scale everything as needed
 		GlStateManager.pushMatrix();
 		GlStateManager.scalef(scale, scale, scale);
 		// draw the translated text lines in the box with the appropriate scale
-		int currentLine = 0;
+		int offsetY = 0;
 		for(int stanzaNum = 0, numStanzas = translated.length; stanzaNum < numStanzas; stanzaNum++) {
 			// get the current stanza (may take up multiple lines on its own)
 			final String stanza = translated[stanzaNum];
 			// determine where to start the stanza
 			int startX = (int) ((BG_START_X + TEXT_START_X) / scale);
-			int startY = (int) ((BG_START_Y + TEXT_START_Y + currentLine * this.font.FONT_HEIGHT * scale) / scale);
+			int startY = (int) ((BG_START_Y + TEXT_START_Y + offsetY) / scale);
 			// draw split (wrapped) stanza
 			this.font.drawSplitString(stanza, startX, startY, (int)(TEXT_WIDTH / scale), 0);
-			currentLine += this.font.getWordWrappedHeight(stanza, (int)(TEXT_WIDTH / scale)) / (this.font.FONT_HEIGHT / scale);
+			offsetY += this.font.getWordWrappedHeight(stanza, (int)(TEXT_WIDTH / scale));
 		}
 		// unscale text
 		GlStateManager.popMatrix();
@@ -233,7 +236,7 @@ public class PhookaGui extends Screen {
 	
 	public void submitAnswer(final int id) {
 		this.isClosing = true;
-		this.minecraft.getConnection().sendPacket(new CPhookaGuiPacket(this.riddle.getName(), (byte)id));
+		this.answer = id;
 		setPage(2);
 	}
 	

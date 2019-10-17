@@ -25,7 +25,7 @@ import spookyspirits.entity.WillOWispEntity;
 import spookyspirits.entity.WispEntity;
 import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpookySpirits;
-import spookyspirits.util.PhookaRiddles;
+import spookyspirits.item.SunshineScrollItem;
 
 public class CommonProxy {
 	
@@ -43,15 +43,17 @@ public class CommonProxy {
 	}
 
 	public void registerItems(final RegistryEvent.Register<Item> event) {
+		// create food
 		final Food spoiledBerryFood = new Food.Builder().hunger(2).saturation(0.1F)
 				.effect(new EffectInstance(Effects.POISON, 110, 0), 0.9F)
 				.effect(new EffectInstance(Effects.HUNGER, 180, 0), 1.0F)
 				.effect(new EffectInstance(Effects.NAUSEA, 200, 1), 1.0F).build();
 		// actually register items
-		event.getRegistry().register(
+		event.getRegistry().registerAll(
 				new BlockNamedItem(ModObjects.SPOILED_BERRY_BUSH, 
 					new Item.Properties().group(SpookySpirits.TAB).food(spoiledBerryFood))
-				.setRegistryName(SpookySpirits.MODID, "spoiled_berries"));
+				.setRegistryName(SpookySpirits.MODID, "spoiled_berries"),
+				new SunshineScrollItem().setRegistryName(SpookySpirits.MODID, "sunshine_scroll"));
 	}
 	
 	public void registerEntities(final RegistryEvent.Register<EntityType<?>> event) {
@@ -120,7 +122,8 @@ public class CommonProxy {
 		event.getRegistry().registerAll(
 				new PhookaEffect.Invisibility().setRegistryName(SpookySpirits.MODID, PhookaEffect.Invisibility.NAME),
 				new PhookaEffect.Sponge().setRegistryName(SpookySpirits.MODID, PhookaEffect.Sponge.NAME),
-				new PhookaEffect.Generic(true).setRegistryName(SpookySpirits.MODID, "phooka_blessing_fortune")
+				new PhookaEffect.Generic(true).setRegistryName(SpookySpirits.MODID, "phooka_blessing_fortune"),
+				new PhookaEffect.Eggs().setRegistryName(SpookySpirits.MODID, PhookaEffect.Eggs.NAME)
 		);
 	}
 

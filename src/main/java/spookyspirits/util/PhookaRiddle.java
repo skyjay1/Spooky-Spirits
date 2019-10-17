@@ -85,7 +85,7 @@ public final class PhookaRiddle implements IStringSerializable {
 	}
 
 	public static class Builder {
-		private String name = "";
+		private final String name;
 		private String translationKey = "";
 		private String answerTranslationKey = "";
 		private String optionTranslationKey1 = "";
@@ -97,7 +97,7 @@ public final class PhookaRiddle implements IStringSerializable {
 		private final Random rand = new Random();
 		
 		private Builder(final String id) {
-			this.name = id;
+			this.name = id.isEmpty() ? "null" : id;
 		}
 		
 		/**
@@ -170,7 +170,7 @@ public final class PhookaRiddle implements IStringSerializable {
 		
 		/** @return a fully built PhookaRiddle with all attributes ready to go **/
 		public PhookaRiddle build() {
-			final int correctIndex = Math.abs(this.name.hashCode()) % 4;
+			final int correctIndex = ((int)name.charAt(0)) % 4;
 			final String[] answers = getArrangedString(correctIndex);
 			return new PhookaRiddle(name, translationKey, answers, correctIndex, type, blessing, cursing);
 		}

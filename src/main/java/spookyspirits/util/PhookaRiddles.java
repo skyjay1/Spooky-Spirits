@@ -17,6 +17,7 @@ import net.minecraft.entity.monster.SkeletonEntity;
 import net.minecraft.entity.passive.SquidEntity;
 import net.minecraft.entity.passive.horse.HorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.potion.Effect;
@@ -28,6 +29,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import spookyspirits.effect.PhookaEffect;
 import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpookySpirits;
 
@@ -46,8 +48,7 @@ public final class PhookaRiddles {
 
 	public static PhookaRiddle register(final PhookaRiddle riddle) {
 		if (REGISTRY.containsKey(riddle.getName())) {
-			SpookySpirits.LOGGER
-					.error("Tried to add duplicate PhookaRiddle with key '" + riddle.getName() + "' - Skipping");
+			SpookySpirits.LOGGER.error("Tried to add duplicate PhookaRiddle with key '" + riddle.getName() + "' - Skipping");
 			return riddle;
 		}
 		return REGISTRY.put(riddle.getName(), riddle);
@@ -103,11 +104,8 @@ public final class PhookaRiddles {
 				.setOptions("entity.minecraft.cow", "item.minecraft.bucket", "fish")
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.EGG, 16)))
-				.setCurse(p -> {
-					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
-						// TODO 16 eggs are thrown at player from various directions
-					}
-				}).build());
+				.setCurse(new PhookaGiveEffect(ModObjects.PHOOKA_CURSE_EGGS, PhookaEffect.Eggs.INTERVAL * 16 + 2, 0))
+				.build());
 
 		register(PhookaRiddle.Builder.create("fire1").setAnswer("block.minecraft.fire")
 				.setOptions("fish", "block.minecraft.grass", "darkness")
@@ -130,9 +128,13 @@ public final class PhookaRiddles {
 		register(PhookaRiddle.Builder.create("rain").setAnswer("rain")
 				.setOptions("sun", "block.minecraft.dirt", "wind")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(p -> {
-					// TODO give player one-use item "Scroll of Sunshine" that stops rain
-				}).setCurse(p -> { 
+				.setBlessing(new PhookaGiveItem(new ItemStack(ModObjects.SUNSHINE_SCROLL)))
+				.setCurse(p -> {
+					int duration = 8000 + p.getRNG().nextInt(2000);
+					p.getEntityWorld().getWorldInfo().setRainTime(duration);
+					p.getEntityWorld().getWorldInfo().setThunderTime(duration * 2 / 3);
+					p.getEntityWorld().getWorldInfo().setRaining(true);
+					p.getEntityWorld().getWorldInfo().setThundering(true);
 					p.getEntityWorld().setRainStrength(1.0F);
 					p.getEntityWorld().setThunderStrength(1.0F);
 				}).build());
@@ -144,7 +146,12 @@ public final class PhookaRiddles {
 						PotionUtils.addPotionToItemStack(new ItemStack(Items.POTION), Potions.AWKWARD),
 						PotionUtils.addPotionToItemStack(new ItemStack(Items.SPLASH_POTION), Potions.WATER)))
 				.setCurse(p -> {
-					// TODO inventory is filled with empty bottles
+					int size = p.inventory.getSizeInventory();
+					for(int i = 0; i < size; i++) {
+						if(p.inventory.getStackInSlot(i).isEmpty()) {
+							p.inventory.setInventorySlotContents(i, new ItemStack(Items.GLASS_BOTTLE, 1));
+						}
+					}
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("footsteps").setAnswer("subtitles.block.generic.footsteps")
@@ -160,7 +167,7 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.LIGHT_GRAY_BED)))
 				.setCurse(p -> {
-					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+					if(p.isServerWorld()) {
 						final PhantomEntity phantom = EntityType.PHANTOM.create(p.getEntityWorld());
 						phantom.setPosition(p.posX, p.posY + 20, p.posZ);
 						phantom.setAttackTarget(p);
@@ -168,7 +175,7 @@ public final class PhookaRiddles {
 					}
 				}).build());
 		
-		register(PhookaRiddle.Builder.create("water").setAnswer("blocks.minecraft.water")
+		register(PhookaRiddle.Builder.create("water").setAnswer("block.minecraft.water")
 				.setOptions("entity.minecraft.ocelot", "entity.minecraft.horse", "block.minecraft.fire")
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.WATER_BUCKET), new ItemStack(Items.WATER_BUCKET),
@@ -191,10 +198,11 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.HARD)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.TOTEM_OF_UNDYING)))
 				.setCurse(p -> {
-					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+					if(p.isServerWorld()) {
 						final SkeletonEntity sk = EntityType.SKELETON.create(p.getEntityWorld());
 						sk.setPosition(p.posX, p.posY, p.posZ);
 						sk.setAttackTarget(p);
+						sk.setItemStackToSlot(EquipmentSlotType.HEAD, new ItemStack(Items.CHAINMAIL_HELMET));
 						p.getEntityWorld().addEntity(sk);
 					}
 				}).build());
@@ -233,14 +241,14 @@ public final class PhookaRiddles {
 				.setOptions("entity.minecraft.boat", "entity.minecraft.rabbit", "entity.minecraft.pig")
 				.setType(PhookaRiddle.Type.HARD)
 				.setBlessing(p -> {
-					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
-						int variant = p.getEntityWorld().getRandom().nextInt(7) | 
+					if(p.isServerWorld()) {
+						int variant = p.getEntityWorld().getRandom().nextInt(7) |
 								p.getEntityWorld().getRandom().nextInt(5) << 8;
 						final HorseEntity horse = EntityType.HORSE.create(p.getEntityWorld());
 						horse.setTamedBy(p);
 						horse.setRearing(true);
 						horse.setHorseVariant(variant);
-						horse.setHorseSaddled(true);
+						horse.replaceItemInInventory(0, new ItemStack(Items.SADDLE));
 						horse.setPosition(p.posX, p.posY, p.posZ);
 						p.getEntityWorld().addEntity(horse);
 					}
@@ -279,7 +287,7 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.HARD)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.INK_SAC, 64))).setCurse(p -> {
 					// TODO a squid is stuck on your head, limiting your vision
-					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+					if(p.isServerWorld()) {
 						final SquidEntity e = EntityType.SQUID.create(p.getEntityWorld());
 						e.setHealth(100F);
 						e.setPosition(p.posX, p.posY, p.posZ);
@@ -313,8 +321,12 @@ public final class PhookaRiddles {
 		}
 		
 		@Override
-		public void accept(PlayerEntity t) {
-			t.addPotionEffect(new EffectInstance(effect, duration, amplifier));
+		public void accept(final PlayerEntity t) {
+			// TODO decide whether to show particles (change last arg to 'true')
+			if(t.isServerWorld() && !t.getEntityWorld().isRemote) {
+				t.addPotionEffect(new EffectInstance(effect, duration, amplifier, false, !(effect instanceof PhookaEffect)));
+				System.out.println("Added potion effect: " + effect.getRegistryName());
+			}
 		}
 	}
 	
@@ -326,9 +338,9 @@ public final class PhookaRiddles {
 			items = i;
 		}
 		@Override
-		public void accept(PlayerEntity t) {
+		public void accept(final PlayerEntity t) {
 			for(final ItemStack i : items) {
-				t.dropItem(i.copy(), true);
+				t.addItemStackToInventory(i);
 			}
 		}
 	}
@@ -344,7 +356,7 @@ public final class PhookaRiddles {
 		}
 
 		@Override
-		public void accept(PlayerEntity t) {
+		public void accept(final PlayerEntity t) {
 			final BlockPos origin = t.getPosition();
 			BlockPos p;
 			int x;
