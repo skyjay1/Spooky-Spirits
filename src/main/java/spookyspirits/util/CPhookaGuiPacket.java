@@ -37,26 +37,29 @@ public class CPhookaGuiPacket implements IPacket<IServerPlayNetHandler> {
 
 	@Override
 	public void processPacket(IServerPlayNetHandler handler) {
-		SpookySpirits.LOGGER.info("Processing Phooka GUI packet. Riddle = " + this.riddleId + ", answer = " + this.answer);
+		SpookySpirits.LOGGER.info("Processing Phooka GUI packet. Riddle = " + this.riddleId + ", userInput = " + this.answer);
 		if(handler instanceof ServerPlayNetHandler) {
 			final PlayerEntity player = ((ServerPlayNetHandler)handler).player;
-			final List<PhookaEntity> phookaList = player.getEntityWorld().getEntitiesWithinAABB(PhookaEntity.class, player.getBoundingBox().grow(2.5D));
-			if(!phookaList.isEmpty()) {
+			if(player.isServerWorld() && !player.getEntityWorld().isRemote) {
+				final List<PhookaEntity> phookaList = player.getEntityWorld().getEntitiesWithinAABB(PhookaEntity.class, player.getBoundingBox().grow(3.0D));
 				final PhookaRiddle riddle = PhookaRiddles.getByName(riddleId);
-				if(this.answer == riddle.getCorrectAnswer()) {
-					// woohoo!
-					riddle.getBlessing().accept(player);
-					SpookySpirits.LOGGER.info("Answer was correct!");
-				} else {
-					// aw man :(
-					riddle.getCursing().accept(player);
-					SpookySpirits.LOGGER.info("Answer was wrong!");
-				}
-				for(final PhookaEntity e : phookaList) {
-					e.setDespawningTicks(1);
+				if(!phookaList.isEmpty() && riddle != null) {
+					// apply effects based on answer
+					if(this.answer == riddle.getCorrectAnswer()) {
+						// woohoo!
+						riddle.getBlessing().accept(player);
+						SpookySpirits.LOGGER.info("Answer was correct!");
+					} else {
+						// aw man :(
+						riddle.getCursing().accept(player);
+						SpookySpirits.LOGGER.info("Answer was wrong!");
+					}
+					// despawn the entity
+					for(final PhookaEntity e : phookaList) {
+						e.setDespawningTicks(1);
+					}
 				}
 			}
-			
 		}
 		
 	}

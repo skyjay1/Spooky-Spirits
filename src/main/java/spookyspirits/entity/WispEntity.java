@@ -43,6 +43,7 @@ import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.registries.ForgeRegistries;
+import spookyspirits.effect.PhookaEffect;
 import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpiritsConfig;
 import spookyspirits.init.SpookySpirits;
@@ -105,7 +106,7 @@ public class WispEntity extends FlyingEntity {
 				// try several times to find a location for the wisp
 				for(int i = 0, attempts = 10; i < attempts; i++) {
 					int x = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * sine);
-					int y = rand.nextInt(extraRadius + i * 2);
+					int y = rand.nextInt(extraRadius + i);
 					int z = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * cosine);
 					int dy = rand.nextBoolean() ? 1 : 2;
 					BlockPos p = WispEntity.getBestY(this.getEntityWorld(), myPos.add(x, y, z), dy);
@@ -115,7 +116,6 @@ public class WispEntity extends FlyingEntity {
 						w.setPosition(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D);
 						w.setWisp(this.getUniqueID());
 						worldIn.addEntity(w);
-						System.out.println("Spawning WillOWispEntity at " + p);
 						break;
 					}
 				}
@@ -160,21 +160,19 @@ public class WispEntity extends FlyingEntity {
 //	
 	public static ConfigValue<List<? extends String>> setupConfig(final SpiritsConfig config, final ForgeConfigSpec.Builder builder) {
 		builder.comment("Percent chance that the following WispEntity actions can occur (0=disabled)");
-		builder.push("wisp_actions");
 		for(final WispAction a : WispAction.ACTIONS) {
-			final ForgeConfigSpec.IntValue cfg = builder.defineInRange(a.getName() + "_chance", a.getDefaultChance(), 0, 100);
-			config.WISP_ACTION_CHANCES.put(a.getName(), cfg);
+			config.registerWispAction(builder, a.getName(), a.getDefaultChance());
 		}
 		final ConfigValue<List<? extends String>> blacklist =
 				builder.comment("Potion effects that the WispEntity should not apply")
 					.defineList("potion_blacklist", 
 						Lists.newArrayList(
 								Effects.WITHER.getRegistryName().toString(), Effects.LEVITATION.getRegistryName().toString(),
-								Effects.HERO_OF_THE_VILLAGE.getRegistryName().toString() ), 
+								Effects.HERO_OF_THE_VILLAGE.getRegistryName().toString(), SpookySpirits.MODID + PhookaEffect.Invisibility.NAME
+								), // TODO add other modded effects
 						o -> o instanceof String && 
 						ForgeRegistries.POTIONS.containsKey(new ResourceLocation((String)o)));
 		
-		builder.pop();
 		return blacklist;
 	}
 
@@ -396,8 +394,7 @@ public class WispEntity extends FlyingEntity {
 		}
 		
 		protected int getPercentChance() {
-			final ForgeConfigSpec.IntValue cfg = SpiritsConfig.CONFIG.WISP_ACTION_CHANCES.get(name);
-			return cfg != null ? cfg.get().intValue() : getDefaultChance();
+			return SpiritsConfig.CONFIG.getActionChance(name);
 		}
 
 		protected boolean canSelect(final Random rand) {

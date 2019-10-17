@@ -10,6 +10,7 @@ import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.Effect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
@@ -22,6 +23,7 @@ import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import spookyspirits.proxies.ClientProxy;
 import spookyspirits.proxies.CommonProxy;
+import spookyspirits.util.PhookaRiddles;
 
 @Mod(SpookySpirits.MODID)
 @Mod.EventBusSubscriber(modid = SpookySpirits.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -76,5 +78,13 @@ public class SpookySpirits {
 	public static void registerBiome(final RegistryEvent.Register<Biome> event) {
 		LOGGER.debug(MODID + ": RegisterBiome");
 		PROXY.registerBiome(event);
+	}
+	
+	@SubscribeEvent
+	public static void registerEffects(final RegistryEvent.Register<Effect> event) {
+		LOGGER.debug(MODID + ": RegisterEffects");
+		PROXY.registerEffects(event);
+		PhookaRiddles.init();
+		PhookaRiddles.dump();
 	}
 }

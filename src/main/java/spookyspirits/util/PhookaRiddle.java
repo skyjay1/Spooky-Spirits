@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.IStringSerializable;
+import spookyspirits.effect.PhookaEffect;
 
 public final class PhookaRiddle implements IStringSerializable {
 	
@@ -15,7 +16,7 @@ public final class PhookaRiddle implements IStringSerializable {
 	private final String translationKey;
 	private final String[] optionsTranslationKeys;
 	private final byte answer;
-	private final PhookaRiddle.Type difficulty;
+	private final PhookaRiddle.Type difficulty;	
 	private final Consumer<PlayerEntity> blessing;
 	private final Consumer<PlayerEntity> cursing;
 	
@@ -29,6 +30,7 @@ public final class PhookaRiddle implements IStringSerializable {
 		this.difficulty = type;
 		this.blessing = answerRight;
 		this.cursing = answerWrong;
+		
 	}
 
 	/** @return a unique name for the riddle **/
@@ -37,7 +39,17 @@ public final class PhookaRiddle implements IStringSerializable {
 		return name;
 	}
 	
-	/** @return a list of translation keys that map to acceptable answers **/
+	@Override
+	public String toString() {
+		String s = "name=" + name + ", answer=" + answer;
+		if(optionsTranslationKeys != null && optionsTranslationKeys.length == 4) {
+			s += ", option1=" + optionsTranslationKeys[0] + ", option2=" + optionsTranslationKeys[1]
+					+ ", option3=" + optionsTranslationKeys[2] + ", option4=" + optionsTranslationKeys[3];
+		}
+		return s;
+	}
+	
+	/** @return a list of the four options to be displayed **/
 	public String[] getAnswerTranslationKeys() {
 		return optionsTranslationKeys;
 	}
@@ -49,7 +61,17 @@ public final class PhookaRiddle implements IStringSerializable {
 	
 	/** @return a byte indicating which array item was the correct answer **/
 	public byte getCorrectAnswer() {
-		return this.answer;
+		return answer;
+	}
+	
+	/** @return an int representing the amplifier to apply as a blessing effect **/
+//	public int getBlessingAmplifier() {
+//		return blessingAmplifier;
+//	}
+	
+	/** @return the difficulty level of the riddle **/
+	public PhookaRiddle.Type getDifficulty() {
+		return difficulty;
 	}
 
 	/** @return a Consumer that applies this riddle's 'reward' effect **/
@@ -148,7 +170,7 @@ public final class PhookaRiddle implements IStringSerializable {
 		
 		/** @return a fully built PhookaRiddle with all attributes ready to go **/
 		public PhookaRiddle build() {
-			final int correctIndex = this.name.hashCode() % 4;
+			final int correctIndex = Math.abs(this.name.hashCode()) % 4;
 			final String[] answers = getArrangedString(correctIndex);
 			return new PhookaRiddle(name, translationKey, answers, correctIndex, type, blessing, cursing);
 		}
@@ -164,8 +186,8 @@ public final class PhookaRiddle implements IStringSerializable {
 			for(int i = 0; i < 4; i++) {
 				if(i == correct) {
 					answers[i] = answerTranslationKey;
-				} else {
-					int getIndex = others.size() > 1 ? rand.nextInt(others.size()) : 0;
+				} else if(!others.isEmpty()){
+					int getIndex = rand.nextInt(others.size());
 					answers[i] = others.remove(getIndex);
 				}
 			}

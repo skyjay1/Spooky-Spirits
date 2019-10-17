@@ -27,6 +27,7 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
+import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -138,7 +139,10 @@ public class PhookaEntity extends MonsterEntity {
 	@Override
 	public boolean processInteract(final PlayerEntity player, final Hand hand) {
 		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && player.getHeldItem(hand).isEmpty()) {
-			final PhookaRiddle riddle = this.getRiddleFor(player);
+			// DEBUG:
+			player.addPotionEffect(new EffectInstance(ModObjects.PHOOKA_BLESSING_INVISIBILITY, 500));
+//			return false;
+			final PhookaRiddle riddle = getRiddleFor(player);
 			if(riddle != null) {
 				GuiLoader.loadPhookaGui(this, player, riddle);
 			}
@@ -196,8 +200,8 @@ public class PhookaEntity extends MonsterEntity {
 	}
 	
 	@Nullable
-	private PhookaRiddle getRiddleFor(final PlayerEntity player) {
-		return PhookaRiddles.getRandom(rand);
+	private static PhookaRiddle getRiddleFor(final PlayerEntity player) {
+		return PhookaRiddles.getRandom(player.getRNG());
 	}
 
 	public static boolean canSpawnHere(EntityType<PhookaEntity> entity, IWorld world, SpawnReason reason,

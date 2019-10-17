@@ -14,10 +14,12 @@ import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.monster.PhantomEntity;
 import net.minecraft.entity.monster.SkeletonEntity;
+import net.minecraft.entity.passive.SquidEntity;
 import net.minecraft.entity.passive.horse.HorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.potion.PotionUtils;
@@ -25,15 +27,14 @@ import net.minecraft.potion.Potions;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
+import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpookySpirits;
 
 public final class PhookaRiddles {
 
 	private static final Map<String, PhookaRiddle> REGISTRY = new HashMap<>();
+	private static boolean isFrozen = false;
 
 	private PhookaRiddles() {
 	}
@@ -70,7 +71,11 @@ public final class PhookaRiddles {
 	}
 
 	//// REGISTER ALL PHOOKA RIDDLES ////
-	static {
+	public static void init() {
+		if(isFrozen) {
+			return;
+		}
+		isFrozen = true;
 		register(PhookaRiddle.Builder.create("air").setAnswer("block.minecraft.air")
 				.setOptions("block.minecraft.water", "block.minecraft.oak_leaves", "item.minecraft.egg")
 				.setType(PhookaRiddle.Type.EASY)
@@ -81,20 +86,15 @@ public final class PhookaRiddles {
 				}).build());
 
 		register(PhookaRiddle.Builder.create("darkness").setAnswer("darkness")
-				.setOptions("", "", "")
+				.setOptions("block.minecraft.glass", "block.minecraft.air", "light")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
-					// TODO 
-				}).build());
+				.setBlessing(new PhookaGiveEffect(ModObjects.PHOOKA_BLESSING_INVISIBILITY, 50000, 0))
+				.setCurse(new PhookaGiveEffect(Effects.BLINDNESS, 1200, 1)).build());
 
 		register(PhookaRiddle.Builder.create("coal").setAnswer("item.minecraft.coal")
 				.setOptions("block.minecraft.fire", "block.minecraft.iron_ore", "block.minecraft.furnace")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(p -> {
-					// TODO give player fortune III somehow???
-				}).setCurse(p -> {
+				.setBlessing(new PhookaGiveEffect(ModObjects.PHOOKA_BLESSING_FORTUNE, 24000, 0)).setCurse(p -> {
 					// TODO give player effect that causes ore block drops to randomly turn to
 					// coal??
 				}).build());
@@ -104,13 +104,15 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.EGG, 16)))
 				.setCurse(p -> {
-					// TODO 16 eggs are thrown at player from various directions
+					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+						// TODO 16 eggs are thrown at player from various directions
+					}
 				}).build());
 
 		register(PhookaRiddle.Builder.create("fire1").setAnswer("block.minecraft.fire")
 				.setOptions("fish", "block.minecraft.grass", "darkness")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 20000, 1)))
+				.setBlessing(new PhookaGiveEffect(Effects.FIRE_RESISTANCE, 20000, 1))
 				.setCurse(p -> p.setFire(15)).build());
 
 		register(PhookaRiddle.Builder.create("map1").setAnswer("item.minecraft.filled_map")
@@ -146,9 +148,9 @@ public final class PhookaRiddles {
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("footsteps").setAnswer("subtitles.block.generic.footsteps")
-				.setOptions("item.minecraft.seeds", "shadow", "biome.minecraft.the_void")
+				.setOptions("item.minecraft.wheat_seeds", "shadow", "biome.minecraft.the_void")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.SPEED, 20000, 3)))
+				.setBlessing(new PhookaGiveEffect(Effects.SPEED, 20000, 2))
 				.setCurse(p -> {
 					// TODO 
 				}).build());
@@ -158,10 +160,12 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.LIGHT_GRAY_BED)))
 				.setCurse(p -> {
-					final PhantomEntity phantom = EntityType.PHANTOM.create(p.getEntityWorld());
-					phantom.setPosition(p.posX, p.posY + 20, p.posZ);
-					phantom.setAttackTarget(p);
-					p.getEntityWorld().addEntity(phantom);
+					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+						final PhantomEntity phantom = EntityType.PHANTOM.create(p.getEntityWorld());
+						phantom.setPosition(p.posX, p.posY + 20, p.posZ);
+						phantom.setAttackTarget(p);
+						p.getEntityWorld().addEntity(phantom);
+					}
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("water").setAnswer("blocks.minecraft.water")
@@ -187,57 +191,59 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.HARD)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.TOTEM_OF_UNDYING)))
 				.setCurse(p -> {
-					final SkeletonEntity sk = EntityType.SKELETON.create(p.getEntityWorld());
-					sk.setPosition(p.posX, p.posY, p.posZ);
-					sk.setAttackTarget(p);
-					p.getEntityWorld().addEntity(sk);
+					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+						final SkeletonEntity sk = EntityType.SKELETON.create(p.getEntityWorld());
+						sk.setPosition(p.posX, p.posY, p.posZ);
+						sk.setAttackTarget(p);
+						p.getEntityWorld().addEntity(sk);
+					}
 				}).build());
 		
 		register(PhookaRiddle.Builder.create("sponge").setAnswer("block.minecraft.sponge")
 				.setOptions("fish", "block.minecraft.fire", "item.minecraft.bucket")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.RESISTANCE, 30000, 1)))
-				.setCurse(p -> {
-					// TODO 
-				}).build());
+				.setBlessing(new PhookaGiveEffect(Effects.RESISTANCE, 30000, 1))
+				.setCurse(new PhookaGiveEffect(ModObjects.PHOOKA_CURSE_SPONGE, Short.MAX_VALUE, 0)).build());
 		
 		register(PhookaRiddle.Builder.create("fire2").setAnswer("block.minecraft.fire")
 				.setOptions("candle", "biome.minecraft.the_void", "entity.minecraft.husk")
 				.setType(PhookaRiddle.Type.HARD)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 40000, 1)))
+				.setBlessing(new PhookaGiveEffect(Effects.FIRE_RESISTANCE, 40000, 1))
 				.setCurse(p -> p.setFire(15)).build());
 		
 		register(PhookaRiddle.Builder.create("fire3").setAnswer("block.minecraft.fire")
 				.setOptions("block.minecraft.grass", "entity.minecraft.zombie", "wind")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.FIRE_RESISTANCE, 30000, 1)))
+				.setBlessing(new PhookaGiveEffect(Effects.FIRE_RESISTANCE, 30000, 1))
 				.setCurse(p -> p.setFire(15)).build());
 		
 		register(PhookaRiddle.Builder.create("wind").setAnswer("wind")
 				.setOptions("entity.minecraft.lightning_bolt", "block.minecraft.fire", "tree")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.SPEED, 40000, 2)))
-				.setCurse(new PhookaGiveEffect(new EffectInstance(Effects.LEVITATION, 600, 0))).build());
+				.setBlessing(new PhookaGiveEffect(Effects.SPEED, 40000, 2))
+				.setCurse(new PhookaGiveEffect(Effects.LEVITATION, 600, 0)).build());
 		
 		register(PhookaRiddle.Builder.create("eye").setAnswer("eye")
 				.setOptions("biome.minecraft.river", "biome.minecraft.ocean", "block.minecraft.player_head")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(new PhookaGiveEffect(new EffectInstance(Effects.NIGHT_VISION, 20000, 0)))
-				.setCurse(new PhookaGiveEffect(new EffectInstance(Effects.BLINDNESS, 1000, 0))).build());
+				.setBlessing(new PhookaGiveEffect(Effects.NIGHT_VISION, 20000, 0))
+				.setCurse(new PhookaGiveEffect(Effects.BLINDNESS, 1000, 0)).build());
 		
 		register(PhookaRiddle.Builder.create("horse").setAnswer("entity.minecraft.horse")
 				.setOptions("entity.minecraft.boat", "entity.minecraft.rabbit", "entity.minecraft.pig")
 				.setType(PhookaRiddle.Type.HARD)
 				.setBlessing(p -> {
-					int variant = p.getEntityWorld().getRandom().nextInt(7) | 
-							p.getEntityWorld().getRandom().nextInt(5) << 8;
-					final HorseEntity horse = EntityType.HORSE.create(p.getEntityWorld());
-					horse.setTamedBy(p);
-					horse.setRearing(true);
-					horse.setHorseVariant(variant);
-					horse.setHorseSaddled(true);
-					horse.setPosition(p.posX, p.posY, p.posZ);
-					p.getEntityWorld().addEntity(horse);
+					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+						int variant = p.getEntityWorld().getRandom().nextInt(7) | 
+								p.getEntityWorld().getRandom().nextInt(5) << 8;
+						final HorseEntity horse = EntityType.HORSE.create(p.getEntityWorld());
+						horse.setTamedBy(p);
+						horse.setRearing(true);
+						horse.setHorseVariant(variant);
+						horse.setHorseSaddled(true);
+						horse.setPosition(p.posX, p.posY, p.posZ);
+						p.getEntityWorld().addEntity(horse);
+					}
 				}).setCurse(p -> {
 					// TODO 
 				}).build());
@@ -245,9 +251,8 @@ public final class PhookaRiddles {
 		register(PhookaRiddle.Builder.create("shadow1").setAnswer("shadow")
 				.setOptions("sleep", "entity.minecraft.spider", "entity.minecraft.lightning_bolt")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(p -> {
-					// TODO
-				}).setCurse(p -> {
+				.setBlessing(new PhookaGiveEffect(ModObjects.PHOOKA_BLESSING_INVISIBILITY, 50000, 3))
+				.setCurse(p -> {
 					long dayTime = p.getEntityWorld().getDayTime();
 					p.getEntityWorld().setDayTime(dayTime - (dayTime % 24000L) - 12000L);
 				}).build());
@@ -255,7 +260,8 @@ public final class PhookaRiddles {
 		register(PhookaRiddle.Builder.create("candle").setAnswer("candle")
 				.setOptions("moon", "block.minecraft.fire", "item.minecraft.arrow")
 				.setType(PhookaRiddle.Type.HARD)
-				.setBlessing(new PhookaGiveItem(new ItemStack(Items.TORCH, 64))).setCurse(p -> {
+				.setBlessing(new PhookaGiveItem(new ItemStack(Items.TORCH, 64)))
+				.setCurse(p -> {
 					// TODO 
 				}).build());
 		
@@ -273,7 +279,20 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.HARD)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.INK_SAC, 64))).setCurse(p -> {
 					// TODO a squid is stuck on your head, limiting your vision
+					if(p.isServerWorld() && !p.getEntityWorld().isRemote) {
+						final SquidEntity e = EntityType.SQUID.create(p.getEntityWorld());
+						e.setHealth(100F);
+						e.setPosition(p.posX, p.posY, p.posZ);
+						p.getEntityWorld().addEntity(e);
+						e.startRiding(p, true);
+					}
 				}).build());
+	}
+	
+	public static void dump() {
+		for(final PhookaRiddle r : REGISTRY.values()) {
+			SpookySpirits.LOGGER.info(r.toString());
+		}
 	}
 	
 	private static ItemStack enchant(final ItemStack i, final Enchantment e, final int l) {
@@ -283,17 +302,19 @@ public final class PhookaRiddles {
 	
 	public static class PhookaGiveEffect implements Consumer<PlayerEntity> {
 		
-		private final EffectInstance[] effects;
+		private final Effect effect;
+		private final int duration;
+		private final int amplifier;
 		
-		public PhookaGiveEffect(final EffectInstance... e) {
-			effects = e;
+		public PhookaGiveEffect(final Effect e, final int length, final int amp) {
+			effect = e;
+			duration = length;
+			amplifier = amp;
 		}
 		
 		@Override
 		public void accept(PlayerEntity t) {
-			for(final EffectInstance e : effects) {
-				t.addPotionEffect(e);
-			}
+			t.addPotionEffect(new EffectInstance(effect, duration, amplifier));
 		}
 	}
 	

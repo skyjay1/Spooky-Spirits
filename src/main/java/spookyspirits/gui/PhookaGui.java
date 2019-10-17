@@ -14,6 +14,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import spookyspirits.entity.PhookaEntity;
+import spookyspirits.init.SpiritsConfig;
 import spookyspirits.init.SpookySpirits;
 import spookyspirits.util.CPhookaGuiPacket;
 import spookyspirits.util.PhookaRiddle;
@@ -88,7 +89,7 @@ public class PhookaGui extends Screen {
 
 	protected PhookaGui(final PhookaEntity phookaIn, final PlayerEntity playerIn, final PhookaRiddle riddleIn) {
 		super(new TranslationTextComponent("entity.spookyspirits.phooka.name"));
-		this.page = 0; // TODO hook into config to find out if we allow opt-out
+		this.page = SpiritsConfig.CONFIG.areRiddlesForced() ? 1 : 0;
 		this.phooka = phookaIn;
 		this.player = playerIn;
 		this.riddle = riddleIn;
@@ -170,7 +171,6 @@ public class PhookaGui extends Screen {
 	
 	@Override
 	public void onClose() {
-		//TODO this.phooka.setDespawningTicks(1);
 		super.onClose();
 	}
 
@@ -187,13 +187,13 @@ public class PhookaGui extends Screen {
 	 **/
 	private void drawText(final String translationKey, Object...parameters) {
 		final String[] translated = new TranslationTextComponent(translationKey, parameters).getFormattedText().split("\\n");
-		int totalLines = 0;
+		int totalHeight = 0;
 		for(final String line : translated) {
-			totalLines += this.font.getWordWrappedHeight(line, TEXT_WIDTH);
+			totalHeight += this.font.getWordWrappedHeight(line, TEXT_WIDTH);
 		}
 		
 		// determine the scale required to fit all lines inside the box (0.5 or 1.0)
-		float scale = (totalLines > TEXT_HEIGHT * 0.9F) ? 0.5F : 1.0F;
+		float scale = (totalHeight > TEXT_HEIGHT * 0.9F) ? 0.75F : 1.0F;
 		// scale everything as needed
 		GlStateManager.pushMatrix();
 		GlStateManager.scalef(scale, scale, scale);
@@ -203,11 +203,11 @@ public class PhookaGui extends Screen {
 			// get the current stanza (may take up multiple lines on its own)
 			final String stanza = translated[stanzaNum];
 			// determine where to start the stanza
-			int startX = BG_START_X + TEXT_START_X;
-			int startY = BG_START_Y + TEXT_START_Y + (int)(currentLine * this.font.FONT_HEIGHT * scale);
+			int startX = (int) ((BG_START_X + TEXT_START_X) / scale);
+			int startY = (int) ((BG_START_Y + TEXT_START_Y + currentLine * this.font.FONT_HEIGHT * scale) / scale);
 			// draw split (wrapped) stanza
 			this.font.drawSplitString(stanza, startX, startY, (int)(TEXT_WIDTH / scale), 0);
-			currentLine += this.font.getWordWrappedHeight(stanza, (int)(TEXT_WIDTH / scale)) / this.font.FONT_HEIGHT / scale;
+			currentLine += this.font.getWordWrappedHeight(stanza, (int)(TEXT_WIDTH / scale)) / (this.font.FONT_HEIGHT / scale);
 		}
 		// unscale text
 		GlStateManager.popMatrix();
@@ -270,10 +270,12 @@ public class PhookaGui extends Screen {
 		
 		public void drawLabel() {
 			// draw string
-			final String localized = new TranslationTextComponent(translationKey)
-					.applyTextStyle(this.isHovered ? TextFormatting.UNDERLINE : TextFormatting.RESET)
-					.getFormattedText();
-			gui.font.drawString(localized, this.x + OPTIONS_WIDTH + SEP, this.y + 2, 0);
+			if(translationKey != null) {
+				final String localized = new TranslationTextComponent(translationKey)
+						.applyTextStyle(this.isHovered ? TextFormatting.UNDERLINE : TextFormatting.RESET)
+						.getFormattedText();
+				gui.font.drawString(localized, this.x + OPTIONS_WIDTH + SEP, this.y + 2, 0);
+			}
 		}
 		
 	}

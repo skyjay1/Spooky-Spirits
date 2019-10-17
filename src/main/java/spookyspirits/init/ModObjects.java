@@ -3,7 +3,9 @@ package spookyspirits.init;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
+import net.minecraft.potion.Effect;
 import net.minecraftforge.registries.ObjectHolder;
+import spookyspirits.effect.PhookaEffect;
 import spookyspirits.entity.*;
 
 @ObjectHolder(SpookySpirits.MODID)
@@ -31,5 +33,15 @@ public final class ModObjects {
 	
 	@ObjectHolder("spoiled_berries")
 	public static final Item SPOILED_BERRIES = null;
+	
+	@ObjectHolder("phooka_blessing_invisibility")
+	public static final Effect PHOOKA_BLESSING_INVISIBILITY = null;
+
+	@ObjectHolder("phooka_curse_sponge")
+	public static final Effect PHOOKA_CURSE_SPONGE = null;
+	
+	@ObjectHolder("phooka_blessing_fortune")
+	public static final Effect PHOOKA_BLESSING_FORTUNE = null;
+
 
 }

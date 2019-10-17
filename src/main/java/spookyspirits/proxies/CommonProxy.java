@@ -9,12 +9,14 @@ import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.BlockNamedItem;
 import net.minecraft.item.Food;
 import net.minecraft.item.Item;
+import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
 import spookyspirits.block.BlockWispLight;
 import spookyspirits.block.SpoiledBerryBush;
+import spookyspirits.effect.PhookaEffect;
 import spookyspirits.entity.FlyingSkull;
 import spookyspirits.entity.FomorEntity;
 import spookyspirits.entity.PhookaEntity;
@@ -23,6 +25,7 @@ import spookyspirits.entity.WillOWispEntity;
 import spookyspirits.entity.WispEntity;
 import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpookySpirits;
+import spookyspirits.util.PhookaRiddles;
 
 public class CommonProxy {
 	
@@ -111,6 +114,14 @@ public class CommonProxy {
 	
 	public void registerContainerTypes(final RegistryEvent.Register<ContainerType<?>> event) {
 		
+	}
+
+	public void registerEffects(final RegistryEvent.Register<Effect> event) {
+		event.getRegistry().registerAll(
+				new PhookaEffect.Invisibility().setRegistryName(SpookySpirits.MODID, PhookaEffect.Invisibility.NAME),
+				new PhookaEffect.Sponge().setRegistryName(SpookySpirits.MODID, PhookaEffect.Sponge.NAME),
+				new PhookaEffect.Generic(true).setRegistryName(SpookySpirits.MODID, "phooka_blessing_fortune")
+		);
 	}
 
 //	private static final Item makeItem(final String name) {
