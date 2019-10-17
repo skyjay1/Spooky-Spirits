@@ -166,7 +166,7 @@ public class PhookaGui extends Screen {
 	@Override
 	public void tick() {
 		if(this.isClosing && this.ticksUntilClose-- <= 0) {
-			this.minecraft.getConnection().sendPacket(new CPhookaGuiPacket(this.riddle.getName(), (byte)answer));
+			SpookySpirits.CHANNEL.sendToServer(new CPhookaGuiPacket(riddle.getName(), (byte)answer));
 			this.phooka.setDespawningTicks(1);
 			this.onClose();
 		}
@@ -207,10 +207,10 @@ public class PhookaGui extends Screen {
 			final String stanza = translated[stanzaNum];
 			// determine where to start the stanza
 			int startX = (int) ((BG_START_X + TEXT_START_X) / scale);
-			int startY = (int) ((BG_START_Y + TEXT_START_Y + offsetY) / scale);
+			int startY = (int) ((BG_START_Y + TEXT_START_Y) / scale) + offsetY;
 			// draw split (wrapped) stanza
 			this.font.drawSplitString(stanza, startX, startY, (int)(TEXT_WIDTH / scale), 0);
-			offsetY += this.font.getWordWrappedHeight(stanza, (int)(TEXT_WIDTH / scale));
+			offsetY += this.font.getWordWrappedHeight(stanza, (int)(TEXT_WIDTH / scale)) / scale;
 		}
 		// unscale text
 		GlStateManager.popMatrix();

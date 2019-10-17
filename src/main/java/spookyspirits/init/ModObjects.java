@@ -40,8 +40,8 @@ public final class ModObjects {
 	@ObjectHolder(PhookaEffect.Invisibility.NAME)
 	public static final Effect PHOOKA_BLESSING_INVISIBILITY = null;
 	
-	@ObjectHolder("phooka_blessing_fortune")
-	public static final Effect PHOOKA_BLESSING_FORTUNE = null;
+	@ObjectHolder(PhookaEffect.Footsteps.NAME)
+	public static final Effect PHOOKA_CURSE_FOOTSTEPS = null;
 
 	@ObjectHolder(PhookaEffect.Sponge.NAME)
 	public static final Effect PHOOKA_CURSE_SPONGE = null;

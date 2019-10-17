@@ -61,7 +61,7 @@ public class PhookaEntity extends MonsterEntity {
 	
 	// Despawning Ticks: 0 means NOT despawning, 1 to [MAX] means starting to despawn
 	private static final DataParameter<Byte> DESPAWNING_TICKS = EntityDataManager.createKey(PhookaEntity.class, DataSerializers.BYTE);
-	private static final int MAX_DESPAWNING_TICKS = 70;
+	private static final int MAX_DESPAWNING_TICKS = 50;
 	private static final String KEY_DESPAWNING_TICKS = "DespawningTicks";
 	
 	public PhookaEntity(final EntityType<? extends MonsterEntity> type, final World world) {
@@ -129,7 +129,7 @@ public class PhookaEntity extends MonsterEntity {
 	
 	@OnlyIn(Dist.CLIENT)
 	public float getFadeFactor() {
-		final float FADE_AT = MAX_DESPAWNING_TICKS / 2;
+		final float FADE_AT = MAX_DESPAWNING_TICKS / 4;
 		if(this.getDespawningTicks() < FADE_AT) {
 			return 1.0F;
 		}
@@ -192,6 +192,8 @@ public class PhookaEntity extends MonsterEntity {
 	
 	@Nullable
 	private static PhookaRiddle getRiddleFor(final PlayerEntity player) {
+		//return PhookaRiddles.getByName("footsteps");
+		// TODO finish testing one by one
 		return PhookaRiddles.getRandom(player.getRNG());
 	}
 

@@ -23,6 +23,7 @@ import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import spookyspirits.proxies.ClientProxy;
 import spookyspirits.proxies.CommonProxy;
+import spookyspirits.util.CPhookaGuiPacket;
 import spookyspirits.util.PhookaRiddles;
 
 @Mod(SpookySpirits.MODID)
@@ -42,11 +43,21 @@ public class SpookySpirits {
 	};
 
 	public static final Logger LOGGER = LogManager.getFormatterLogger(MODID);
-	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-			new ResourceLocation(MODID, "channel"), () -> MODID, (s) -> s.equals(MODID), (s) -> s.equals(MODID));
+	public static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
+			.named(new ResourceLocation(MODID, "channel"))
+            .networkProtocolVersion(() -> MODID)
+            .clientAcceptedVersions(MODID::equals)
+            .serverAcceptedVersions(MODID::equals)
+            .simpleChannel();
 	
 	public SpookySpirits() {
 		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SpiritsConfig.SPEC);
+		// Packets
+		CHANNEL.messageBuilder(CPhookaGuiPacket.class, 0)
+			.encoder(CPhookaGuiPacket::toBytes)
+			.decoder(CPhookaGuiPacket::fromBytes)
+			.consumer(CPhookaGuiPacket::handlePacket)
+			.add();
 	}	
 	
 	@SubscribeEvent

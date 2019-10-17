@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.monster.PhantomEntity;
 import net.minecraft.entity.monster.SkeletonEntity;
 import net.minecraft.entity.passive.SquidEntity;
@@ -25,11 +26,15 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.potion.PotionUtils;
 import net.minecraft.potion.Potions;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraftforge.registries.ForgeRegistries;
 import spookyspirits.effect.PhookaEffect;
+import spookyspirits.entity.WispEntity;
 import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpookySpirits;
 
@@ -77,34 +82,35 @@ public final class PhookaRiddles {
 			return;
 		}
 		isFrozen = true;
+		
 		register(PhookaRiddle.Builder.create("air").setAnswer("block.minecraft.air")
 				.setOptions("block.minecraft.water", "block.minecraft.oak_leaves", "item.minecraft.egg")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(p -> {
+				.setBlessing(new PhookaGiveEffect(Effects.SPEED, 16000, 1)
+						.andThen(new PhookaGiveEffect(Effects.SLOW_FALLING, 16000, 0))
 					// TODO give player speed and reduce fall damage
-				}).setCurse(p -> {
+				).setCurse(p -> {
 					// TODO give player slowness and increase fall damage
 				}).build());
 
 		register(PhookaRiddle.Builder.create("darkness").setAnswer("darkness")
 				.setOptions("block.minecraft.glass", "block.minecraft.air", "light")
 				.setType(PhookaRiddle.Type.EASY)
-				.setBlessing(new PhookaGiveEffect(ModObjects.PHOOKA_BLESSING_INVISIBILITY, 50000, 0))
+				.setBlessing(new PhookaGiveEffect(PhookaEffect.Invisibility.REGISTRY_NAME, 50000, 0))
 				.setCurse(new PhookaGiveEffect(Effects.BLINDNESS, 1200, 1)).build());
 
 		register(PhookaRiddle.Builder.create("coal").setAnswer("item.minecraft.coal")
 				.setOptions("block.minecraft.fire", "block.minecraft.iron_ore", "block.minecraft.furnace")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(new PhookaGiveEffect(ModObjects.PHOOKA_BLESSING_FORTUNE, 24000, 0)).setCurse(p -> {
-					// TODO give player effect that causes ore block drops to randomly turn to
-					// coal??
-				}).build());
+				// TODO think of something else?
+				.setBlessing(new PhookaGiveEffect(Effects.LUCK, 12000, 1))
+				.setCurse(new PhookaGiveEffect(Effects.UNLUCK, 12000, 1)).build());
 
 		register(PhookaRiddle.Builder.create("egg").setAnswer("item.minecraft.egg")
 				.setOptions("entity.minecraft.cow", "item.minecraft.bucket", "fish")
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.EGG, 16)))
-				.setCurse(new PhookaGiveEffect(ModObjects.PHOOKA_CURSE_EGGS, PhookaEffect.Eggs.INTERVAL * 16 + 2, 0))
+				.setCurse(new PhookaGiveEffect(PhookaEffect.Eggs.REGISTRY_NAME, PhookaEffect.Eggs.INTERVAL * 16 + 2, 0))
 				.build());
 
 		register(PhookaRiddle.Builder.create("fire1").setAnswer("block.minecraft.fire")
@@ -158,9 +164,7 @@ public final class PhookaRiddles {
 				.setOptions("item.minecraft.wheat_seeds", "shadow", "biome.minecraft.the_void")
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveEffect(Effects.SPEED, 20000, 2))
-				.setCurse(p -> {
-					// TODO 
-				}).build());
+				.setCurse(new PhookaGiveEffect(PhookaEffect.Footsteps.REGISTRY_NAME, 5000, 0)).build());
 		
 		register(PhookaRiddle.Builder.create("bed").setAnswer("block.minecraft.bed")
 				.setOptions("entity.minecraft.wolf", "block.minecraft.chest", "entity.minecraft.llama")
@@ -180,9 +184,7 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.EASY)
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.WATER_BUCKET), new ItemStack(Items.WATER_BUCKET),
 						new ItemStack(Items.WATER_BUCKET), new ItemStack(Items.WATER_BUCKET)))
-				.setCurse(p -> {
-					// TODO
-				}).build());
+				.setCurse(new PhookaTeleportToBiome(Biome.Category.OCEAN)).build());
 		
 		register(PhookaRiddle.Builder.create("hook").setAnswer("hook")
 				.setOptions("item.minecraft.bread", "item.minecraft.spider_eye", "block.minecraft.cobweb")
@@ -211,7 +213,7 @@ public final class PhookaRiddles {
 				.setOptions("fish", "block.minecraft.fire", "item.minecraft.bucket")
 				.setType(PhookaRiddle.Type.MEDIUM)
 				.setBlessing(new PhookaGiveEffect(Effects.RESISTANCE, 30000, 1))
-				.setCurse(new PhookaGiveEffect(ModObjects.PHOOKA_CURSE_SPONGE, Short.MAX_VALUE, 0)).build());
+				.setCurse(new PhookaGiveEffect(PhookaEffect.Sponge.REGISTRY_NAME, Short.MAX_VALUE, 0)).build());
 		
 		register(PhookaRiddle.Builder.create("fire2").setAnswer("block.minecraft.fire")
 				.setOptions("candle", "biome.minecraft.the_void", "entity.minecraft.husk")
@@ -242,8 +244,8 @@ public final class PhookaRiddles {
 				.setType(PhookaRiddle.Type.HARD)
 				.setBlessing(p -> {
 					if(p.isServerWorld()) {
-						int variant = p.getEntityWorld().getRandom().nextInt(7) |
-								p.getEntityWorld().getRandom().nextInt(5) << 8;
+						int variant = p.getRNG().nextInt(7) |
+								p.getRNG().nextInt(5) << 8;
 						final HorseEntity horse = EntityType.HORSE.create(p.getEntityWorld());
 						horse.setTamedBy(p);
 						horse.setRearing(true);
@@ -259,7 +261,7 @@ public final class PhookaRiddles {
 		register(PhookaRiddle.Builder.create("shadow1").setAnswer("shadow")
 				.setOptions("sleep", "entity.minecraft.spider", "entity.minecraft.lightning_bolt")
 				.setType(PhookaRiddle.Type.MEDIUM)
-				.setBlessing(new PhookaGiveEffect(ModObjects.PHOOKA_BLESSING_INVISIBILITY, 50000, 3))
+				.setBlessing(new PhookaGiveEffect(PhookaEffect.Invisibility.REGISTRY_NAME, 50000, 3))
 				.setCurse(p -> {
 					long dayTime = p.getEntityWorld().getDayTime();
 					p.getEntityWorld().setDayTime(dayTime - (dayTime % 24000L) - 12000L);
@@ -288,11 +290,12 @@ public final class PhookaRiddles {
 				.setBlessing(new PhookaGiveItem(new ItemStack(Items.INK_SAC, 64))).setCurse(p -> {
 					// TODO a squid is stuck on your head, limiting your vision
 					if(p.isServerWorld()) {
-						final SquidEntity e = EntityType.SQUID.create(p.getEntityWorld());
-						e.setHealth(100F);
-						e.setPosition(p.posX, p.posY, p.posZ);
-						p.getEntityWorld().addEntity(e);
-						e.startRiding(p, true);
+						final SquidEntity squid = EntityType.SQUID.create(p.getEntityWorld());
+						squid.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(50D);
+						squid.setPosition(p.posX, p.posY, p.posZ);
+						p.getEntityWorld().addEntity(squid);
+						squid.startRiding(p, true);
+						p.addShoulderEntity(squid.serializeNBT());
 					}
 				}).build());
 	}
@@ -310,22 +313,26 @@ public final class PhookaRiddles {
 	
 	public static class PhookaGiveEffect implements Consumer<PlayerEntity> {
 		
-		private final Effect effect;
+		private final ResourceLocation effectName;
 		private final int duration;
 		private final int amplifier;
 		
-		public PhookaGiveEffect(final Effect e, final int length, final int amp) {
-			effect = e;
+		public PhookaGiveEffect(final ResourceLocation effectID, final int length, final int amp) {
+			effectName = effectID;
 			duration = length;
 			amplifier = amp;
+		}
+		
+		public PhookaGiveEffect(final Effect e, final int length, final int amp) {
+			this(e.getRegistryName(), length, amp);
 		}
 		
 		@Override
 		public void accept(final PlayerEntity t) {
 			// TODO decide whether to show particles (change last arg to 'true')
 			if(t.isServerWorld() && !t.getEntityWorld().isRemote) {
+				final Effect effect = ForgeRegistries.POTIONS.getValue(effectName);
 				t.addPotionEffect(new EffectInstance(effect, duration, amplifier, false, !(effect instanceof PhookaEffect)));
-				System.out.println("Added potion effect: " + effect.getRegistryName());
 			}
 		}
 	}
@@ -357,37 +364,79 @@ public final class PhookaRiddles {
 
 		@Override
 		public void accept(final PlayerEntity t) {
-			final BlockPos origin = t.getPosition();
-			BlockPos p;
+			attemptTeleportAround(t, t.getPosition());
+		}
+		
+		protected boolean attemptTeleportAround(final PlayerEntity t, final BlockPos origin) {
+			int attemptsLeft = 25;
+			BlockPos pos = origin;
 			int x;
 			int z;
-			int attemptsLeft = 30;
 			// try to teleport the player until it works, or you fail too many times
 			do {
-				x = min + t.getEntityWorld().getRandom().nextInt(max);
-				z = min + t.getEntityWorld().getRandom().nextInt(max);
-				if (t.getEntityWorld().getRandom().nextBoolean()) {
+				x = min + t.getRNG().nextInt(max);
+				z = min + t.getRNG().nextInt(max);
+				if (t.getRNG().nextBoolean()) {
 					x *= -1;
 				}
-				if (t.getEntityWorld().getRandom().nextBoolean()) {
+				if (t.getRNG().nextBoolean()) {
 					z *= -1;
 				}
-				p = getFloorY(t.getEntityWorld(), origin.add(x, 200, z));
-			} while (attemptsLeft-- > 0 && t.attemptTeleport(p.getX() + 0.5D, p.getY(), p.getZ() + 0.5D, false));
+				pos = getFloorY(t.getEntityWorld(), origin.add(x, 40, z));
+			} while (attemptsLeft-- > 0 && t.attemptTeleport(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, false));
 
 			if (attemptsLeft > 0) {
 				// assume success
-				t.getEntityWorld().playSound((PlayerEntity) null, p.getX(), p.getY(), p.getZ(),
+				t.getEntityWorld().playSound((PlayerEntity) null, pos.getX(), pos.getY(), pos.getZ(),
 						SoundEvents.ENTITY_ENDERMAN_TELEPORT, SoundCategory.PLAYERS, 1.0F, 1.0F);
 				t.playSound(SoundEvents.ENTITY_ENDERMAN_TELEPORT, 1.0F, 1.0F);
+				return true;
 			}
+			return false;
 		}
 
-		private static BlockPos getFloorY(final World world, BlockPos p) {
-			while (world.isAirBlock(p.down()) && p.getY() > 0) {
+		protected static BlockPos getFloorY(final World world, BlockPos p) {
+			while (p.getY() > 255 || (world.isAirBlock(p.down()) && p.getY() > 0)) {
 				p = p.down();
 			}
 			return p;
 		}
+	}
+	
+	public static class PhookaTeleportToBiome extends PhookaTeleportPlayer {
+		
+		private final Biome.Category type;
+
+		public PhookaTeleportToBiome(Biome.Category biomeType) {
+			super(1, 10);
+			type = biomeType;
+		}
+		
+		@Override
+		public void accept(final PlayerEntity p) {
+			final BlockPos origin = p.getPosition();
+			// check ever-increasing circles until a max radius of 4000
+			for(float radius = 32; radius < 4000; radius += 16) {
+				final double dt = Math.PI / Math.max(4.0F, radius / 32.0F);
+				// cycle through each angle in a full circle
+				for(double t = 0; t < 2 * Math.PI; t += dt) {
+					// determine the location based on angle and radius
+					int x = (int)(radius * Math.sin(t));
+					int z = (int)(radius * Math.cos(t));
+					BlockPos pos = origin.add(x, 0, z);
+					// check if this location is the correct biome
+					if(p.getEntityWorld().getBiome(pos).getCategory() == this.type) {
+						// we found the biome! teleport the player to a safe location there
+						if(this.attemptTeleportAround(p, pos)) {
+							return;
+						}
+					}
+				}
+			}
+			// if we finished the loop, that means we didn't find any of that biome
+			// so just teleport the player randomly
+			super.accept(p);
+		}
+		
 	}
 }

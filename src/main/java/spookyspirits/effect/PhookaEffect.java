@@ -11,6 +11,7 @@ import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.EffectType;
 import net.minecraft.potion.Effects;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -18,6 +19,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import spookyspirits.init.SpookySpirits;
 
 public abstract class PhookaEffect extends Effect {
 
@@ -63,32 +65,32 @@ public abstract class PhookaEffect extends Effect {
 		return shouldRender();
 	}
 
-	public static class Generic extends PhookaEffect {
-		private final boolean shouldRender;
+	public static class Footsteps extends PhookaEffect {
+		public static final String NAME = "phooka_curse_footsteps";
+		public static final ResourceLocation REGISTRY_NAME = new ResourceLocation(SpookySpirits.MODID, NAME);
 		
-		public Generic(boolean isBlessing, boolean renderIcon) {
-			super(isBlessing);
-			shouldRender = renderIcon;
-		}
-		
-		public Generic(boolean isBlessing) {
-			this(isBlessing, false);
+		public Footsteps() {
+			super(false);
+			this.setRegistryName(SpookySpirits.MODID, NAME);
 		}
 
 		@Override
 		protected void tick(final LivingEntity entity, final int amp) {
 		}
 		
+		@Override
 		protected boolean shouldRender() {
-			return shouldRender;
+			return false;
 		}
 	}
 
 	public static class Invisibility extends PhookaEffect {
 		public static final String NAME = "phooka_blessing_invisibility";
+		public static final ResourceLocation REGISTRY_NAME = new ResourceLocation(SpookySpirits.MODID, NAME);
 
 		public Invisibility() {
 			super(true);
+			this.setRegistryName(REGISTRY_NAME);
 		}
 
 		@Override
@@ -98,7 +100,7 @@ public abstract class PhookaEffect extends Effect {
 				final int light = entity.getEntityWorld().getLight(pos);
 				final EffectInstance invis = entity.getActivePotionEffect(Effects.INVISIBILITY);
 				// if entity does not have full invisibility and the light level is low enough
-				if ((invis == null || invis.getDuration() < 50) && light < 7 + amp) {
+				if ((invis == null || invis.getDuration() < 100) && light < 6 + amp) {
 					entity.addPotionEffect(new EffectInstance(Effects.INVISIBILITY, 200, 0));
 				}
 //
@@ -111,14 +113,16 @@ public abstract class PhookaEffect extends Effect {
 
 	public static class Sponge extends PhookaEffect {
 		public static final String NAME = "phooka_curse_sponge";
+		public static final ResourceLocation REGISTRY_NAME = new ResourceLocation(SpookySpirits.MODID, NAME);
 
 		public Sponge() {
 			super(false);
+			this.setRegistryName(REGISTRY_NAME);
 		}
 
 		@Override
 		public void tick(final LivingEntity entity, final int amp) {
-			if (entity.isInWater()) {
+			if (entity.ticksExisted % 4 == 0 && entity.isInWater()) {
 				// place sponge
 				entity.getEntityWorld().setBlockState(entity.getPosition(), Blocks.SPONGE.getDefaultState());
 				// remove effect
@@ -134,12 +138,14 @@ public abstract class PhookaEffect extends Effect {
 
 	public static class Eggs extends PhookaEffect {
 		public static final String NAME = "phooka_curse_eggs";
+		public static final ResourceLocation REGISTRY_NAME = new ResourceLocation(SpookySpirits.MODID, NAME);
 		public static final int INTERVAL = 20;
 		private static final int MIN_RANGE = 2;
-		private static final int MAX_RANGE = 6;
+		private static final int MAX_RANGE = 5;
 
 		public Eggs() {
 			super(false);
+			this.setRegistryName(REGISTRY_NAME);
 		}
 
 		@Override
@@ -172,7 +178,7 @@ public abstract class PhookaEffect extends Effect {
 						double d2 = d0 - egg.posY;
 						double d3 = entity.posZ - p.getZ();
 						float f = MathHelper.sqrt(d1 * d1 + d3 * d3) * 0.2F;
-						egg.shoot(d1, d2 + (double) f, d3, 1.0F, 0.1F);
+						egg.shoot(d1, d2 + (double) f, d3, 1.4F, 0.1F);
 						entity.getEntityWorld().playSound(p.getX(), p.getY(), p.getZ(), SoundEvents.ENTITY_EGG_THROW,
 								SoundCategory.PLAYERS, 1.0F, 1.0F / (entity.getRNG().nextFloat() * 0.4F + 0.8F), false);
 						entity.world.addEntity(egg);

@@ -120,10 +120,10 @@ public class CommonProxy {
 
 	public void registerEffects(final RegistryEvent.Register<Effect> event) {
 		event.getRegistry().registerAll(
-				new PhookaEffect.Invisibility().setRegistryName(SpookySpirits.MODID, PhookaEffect.Invisibility.NAME),
-				new PhookaEffect.Sponge().setRegistryName(SpookySpirits.MODID, PhookaEffect.Sponge.NAME),
-				new PhookaEffect.Generic(true).setRegistryName(SpookySpirits.MODID, "phooka_blessing_fortune"),
-				new PhookaEffect.Eggs().setRegistryName(SpookySpirits.MODID, PhookaEffect.Eggs.NAME)
+				new PhookaEffect.Invisibility(),
+				new PhookaEffect.Sponge(),
+				new PhookaEffect.Footsteps(),
+				new PhookaEffect.Eggs()
 		);
 	}
 
