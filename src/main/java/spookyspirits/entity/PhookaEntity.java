@@ -27,7 +27,6 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -35,7 +34,6 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import spookyspirits.effect.PhookaEffect;
 import spookyspirits.gui.GuiLoader;
 import spookyspirits.init.ModObjects;
 import spookyspirits.util.PhookaRiddle;
@@ -62,7 +60,7 @@ public class PhookaEntity extends MonsterEntity {
 	// Despawning Ticks: 0 means NOT despawning, 1 to [MAX] means starting to despawn
 	private static final DataParameter<Byte> DESPAWNING_TICKS = EntityDataManager.createKey(PhookaEntity.class, DataSerializers.BYTE);
 	private static final int MAX_DESPAWNING_TICKS = 50;
-	private static final String KEY_DESPAWNING_TICKS = "DespawningTicks";
+	private static final String KEY_DESPAWNING_TICKS = "DespawningTicks";	
 	
 	public PhookaEntity(final EntityType<? extends MonsterEntity> type, final World world) {
 		super(type, world);
@@ -113,6 +111,7 @@ public class PhookaEntity extends MonsterEntity {
 					}
 				}
 			} else {
+				updateAnimations();
 				// spawn particles
 				if(this.isDespawning() && this.getDespawningTicks() > MAX_DESPAWNING_TICKS / 2) {
 					this.world.addParticle(ParticleTypes.HAPPY_VILLAGER, 
@@ -125,6 +124,10 @@ public class PhookaEntity extends MonsterEntity {
 				}
 			}
 		}		
+	}
+	
+	private void updateAnimations() {
+		
 	}
 	
 	@OnlyIn(Dist.CLIENT)

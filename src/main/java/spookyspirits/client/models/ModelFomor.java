@@ -98,8 +98,8 @@ public class ModelFomor extends EntityModel<FomorEntity> {
 	public void setRotationAngles(final FomorEntity entity, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scaleFactor) {
 		// leg
-		final float speed = 0.9F;
-		final float angle = 1.0F;
+		final float speed = 0.3F;
+		final float angle = 0.6F;
 		// leg angle 1
 		final float legAngle = MathHelper.cos(ageInTicks * speed) * angle;
 		legUpper.rotateAngleX = legUpperAngleX + legAngle;

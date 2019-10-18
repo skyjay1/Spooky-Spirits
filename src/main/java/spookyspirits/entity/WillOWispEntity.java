@@ -14,6 +14,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.FlyingEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.controller.MovementController;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -21,9 +22,15 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
+import net.minecraft.pathfinding.Path;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.RayTraceResult.Type;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
@@ -37,11 +44,9 @@ public class WillOWispEntity extends FlyingEntity {
 			.createKey(WillOWispEntity.class, DataSerializers.OPTIONAL_UNIQUE_ID);
 	private static final String KEY_WISP = "WispUUID";
 	
-	private float fadeFactor;
-
 	public WillOWispEntity(EntityType<? extends FlyingEntity> type, World world) {
 		super(type, world);
-		
+		this.moveController = new WillOWispEntity.MoveHelperController(this);
 	}
 	
 	@Override
@@ -54,21 +59,19 @@ public class WillOWispEntity extends FlyingEntity {
 	protected void registerGoals() {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new PlaceLightGoal(this, 6));
-		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 5.5D));
+		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 6.5D));
 	}
 
 	@Override
 	protected void registerAttributes() {
 		super.registerAttributes();
 		this.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0D);
+		this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.16D);
 	}
 
 	@Override
 	public void livingTick() {
 		super.livingTick();
-		
-		// udpate fade factor
-		this.fadeFactor = getFadeFactor(this.ticksExisted, 0.08F, 1.55F);
 		
 		// every 30 ticks, check if has no wisp OR is close enough to wisp to despawn
 		if(this.ticksExisted % 30 == 15 && this.isServerWorld() && !this.world.isRemote) {
@@ -128,6 +131,12 @@ public class WillOWispEntity extends FlyingEntity {
 		return getWispUUID() != null && getWisp() != null && getWisp().isAlive();
 	}
 	
+	public boolean isStopped() {
+		double x = this.getMotion().getX();
+		double z = this.getMotion().getZ();
+		return (x * x + z * z) < (0.1D * 0.1D + 0.1D * 0.1D);
+	}
+	
 	@Nullable
 	public UUID getWispUUID() {
 		return this.getDataManager().get(WISP_UUID).orElse(null);
@@ -165,15 +174,61 @@ public class WillOWispEntity extends FlyingEntity {
 	 * @param amplitude affects the amount of time spent fully transparent or fully opaque
 	 * @return a number between 0.0F and 0.95F, where 0.0F is fully transparent
 	 **/
+	@OnlyIn(Dist.CLIENT)
 	public static float getFadeFactor(final int ticks, final float fadeSpeed, final float amplitude) {
 		// downshift: fade factor will be shifted DOWN by 4%
+		// this means more time will be spent at lower values
 		float downShift = amplitude * 0.04F;
 		// fade: a number between (-amplitude) and (amplitude), with (downshift) subtracted
 		float fade = (float)Math.sin(ticks * fadeSpeed) * amplitude - downShift;
 		// return a single float between 0 and 0.95 (time spent outside of these bounds is clamped)
-		return MathHelper.clamp(fade, 0.0F, 0.95F);
+		return MathHelper.clamp(fade, 0.05F, 0.95F);
 	}
-	
+
+	static class MoveHelperController extends MovementController {
+		private final WillOWispEntity entity;
+		private int courseChangeCooldown;
+
+		public MoveHelperController(WillOWispEntity willowisp) {
+			super(willowisp);
+			this.entity = willowisp;
+		}
+
+		@Override
+		public void tick() {
+			if (this.action == MovementController.Action.MOVE_TO) {
+				if (this.courseChangeCooldown-- <= 0) {
+					this.courseChangeCooldown += this.entity.getRNG().nextInt(5) + 2;
+					Vec3d vec3d = new Vec3d(this.posX - this.entity.posX, this.posY - this.entity.posY,
+							this.posZ - this.entity.posZ);
+					double d0 = vec3d.length();
+					vec3d = vec3d.normalize();
+					double speed = this.entity.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue();
+					if (this.isApproachingTarget(vec3d, MathHelper.ceil(d0))) {
+						if(d0 < 1.0D) {
+							speed = 0.01D * d0;
+						}
+						this.entity.setMotion(this.entity.getMotion().add(vec3d.scale(speed)));
+					} else {
+						this.action = MovementController.Action.WAIT;
+					}
+				}
+			}
+		}
+
+		private boolean isApproachingTarget(final Vec3d distanceToTarget, final int steps) {
+			AxisAlignedBB axisalignedbb = this.entity.getBoundingBox();
+			for (int i = 1; i < steps; ++i) {
+				axisalignedbb = axisalignedbb.offset(distanceToTarget);
+				if (!this.entity.world.isCollisionBoxesEmpty(this.entity, axisalignedbb)) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+	}
+
 	class PlaceLightGoal extends Goal {
 		private final WillOWispEntity willowisp;
 		private final BlockState state;
@@ -245,31 +300,38 @@ public class WillOWispEntity extends FlyingEntity {
 		
 		@Override
 		public boolean shouldExecute() {
-			return this.willowisp.fadeFactor > 0.9D && this.willowisp.getWisp() != null && isPlayerClose();
+			return this.willowisp.isStopped() && this.willowisp.getWisp() != null && isPlayerClose();
 		}
 		
 		@Override
 		public void startExecuting() {
 			final WispEntity wispEntity = this.willowisp.getWisp();
 			final BlockPos wispPos = wispEntity.getPosition();
+			final Vec3d currentPos = wispEntity.getPositionVec();
 			final BlockPos origin = willowisp.getPosition();
 			final double curDisSq = wispPos.distanceSq(origin);
 			final int radius = Math.max(2, (int)Math.ceil(range * 1.5D));
 			final int radDiv2 = radius / 2;
 			// attempt to find a blockpos that is AIR and CLOSER (to the wisp)
 			BlockPos pos;
+			Vec3d vec;
 			for(int i = 0, attempts = 20; i < attempts; i++) {
 				int x = willowisp.rand.nextInt(radius) - radDiv2;
 				int y = willowisp.rand.nextInt(radDiv2);
 				int z = willowisp.rand.nextInt(radius) - radDiv2;
 				int dy = 1 + willowisp.rand.nextInt(3);
 				pos = WispEntity.getBestY(willowisp.getEntityWorld(), origin.add(x, y, z), dy);
-				if(wispPos.distanceSq(pos) < curDisSq && willowisp.getEntityWorld().isAirBlock(pos)) {
-					// attempt to teleport the willowisp
-					if(willowisp.attemptTeleport(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, false)) {
-						willowisp.moveToBlockPosAndAngles(pos, willowisp.rotationYaw, willowisp.rotationPitch);
+				vec = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+				RayTraceResult.Type result = willowisp.getEntityWorld().rayTraceBlocks(new RayTraceContext(currentPos, vec,
+						RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, willowisp)).getType();
+				if(result == Type.MISS && wispPos.distanceSq(pos) < curDisSq /* && willowisp.getEntityWorld().isAirBlock(pos)*/) {
+					// attempt to move
+					willowisp.getMoveHelper().setMoveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 1.0D);
+					
+					//if(willowisp.attemptTeleport(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, false)) {
+						//willowisp.moveToBlockPosAndAngles(pos, willowisp.rotationYaw, willowisp.rotationPitch);
 						return;
-					}
+					//}
 				}
 			}
 			

@@ -108,7 +108,7 @@ public class WispEntity extends FlyingEntity {
 					int x = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * sine);
 					int y = rand.nextInt(extraRadius + i);
 					int z = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * cosine);
-					int dy = rand.nextBoolean() ? 1 : 2;
+					int dy = 1 + rand.nextInt(3);
 					BlockPos p = WispEntity.getBestY(this.getEntityWorld(), myPos.add(x, y, z), dy);
 					// if the chosen position is actually air, place a Will O WispEntity
 					if(this.getEntityWorld().isAirBlock(p)) {
@@ -140,11 +140,12 @@ public class WispEntity extends FlyingEntity {
 	 * @param dy the amount of change in y per test
 	 * @return a BlockPos that may or may not actually be air
 	 **/
-	public static BlockPos getBestY(final World world, BlockPos p, int dy) {
-		int attempts = 6;
-		dy = Math.max(1, dy);
-		while(world.isAirBlock(p.down(dy)) && attempts-- > 0 && p.getY() - dy > 0) {
-			p = p.down(dy);
+	public static BlockPos getBestY(final World world, final BlockPos origin, final int dy) {
+		final int deltaY = Math.max(1, dy);
+		BlockPos p = origin;
+		int attempts = 20;
+		while(world.isAirBlock(p.down(deltaY)) && attempts-- > 0 && (p.getY() - deltaY) > 0) {
+			p = p.down(deltaY);
 		}
 		return p;
 	}

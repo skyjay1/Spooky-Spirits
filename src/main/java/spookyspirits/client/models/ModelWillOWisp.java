@@ -45,6 +45,6 @@ public class ModelWillOWisp extends EntityModel<WillOWispEntity> {
 	public void setRotationAngles(final WillOWispEntity entity, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scaleFactor) {
 		float bobbing = (float)Math.sin((entity.ticksExisted + entity.getEntityId()) * 0.09D) * 0.28F;
-		GlStateManager.translatef(0F, bobbing * scaleFactor, 0F);
+		GlStateManager.translatef(0F, (6.0F + bobbing) * scaleFactor, 0F);
 	}
 }
