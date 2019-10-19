@@ -4,191 +4,202 @@ import com.mojang.blaze3d.platform.GlStateManager;
 
 import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
+import net.minecraft.client.renderer.model.ModelBox;
+import net.minecraft.util.math.MathHelper;
 import spookyspirits.entity.PhookaEntity;
 
 public class ModelPhooka extends EntityModel<PhookaEntity> {
-	public final RendererModel torso;
-	public final RendererModel head;
-	public final RendererModel lowerTorso;
-	public final RendererModel backFur;
-	public final RendererModel upperArm1;
-	public final RendererModel upperArm2;
-	public final RendererModel snout;
-	public final RendererModel snout1;
-	public final RendererModel rightHorn;
-	public final RendererModel leftHorn;
-	public final RendererModel ear1;
-	public final RendererModel ear2;
-	public final RendererModel hip1;
-	public final RendererModel hip2;
-	public final RendererModel tailBase;
-	public final RendererModel leg1_1;
-	public final RendererModel leg1_2;
-	public final RendererModel foot1;
-	public final RendererModel leg2_1;
-	public final RendererModel leg2_2;
-	public final RendererModel foot2;
-	public final RendererModel tail1;
-	public final RendererModel tail2;
-	public final RendererModel tail2_1;
-	public final RendererModel lowerArm1;
-	public final RendererModel lowerArm2;
+	private final RendererModel body;
+	private final RendererModel torso;
+	private final RendererModel upperTorso;
+	private final RendererModel lowerTorso;
+	private final RendererModel hip1;
+	private final RendererModel legUpper1;
+	private final RendererModel legLower1;
+	private final RendererModel foot1;
+	private final RendererModel hip2;
+	private final RendererModel legUpper2;
+	private final RendererModel legLower2;
+	private final RendererModel foot2;
+	private final RendererModel head;
+	private final RendererModel horn1;
+	private final RendererModel horn2;
+	private final RendererModel snout1;
+	private final RendererModel ear1;
+	private final RendererModel ear2;
+	private final RendererModel tailBase;
+	private final RendererModel tail1;
+	private final RendererModel tail2;
+	private final RendererModel tail3;
+	private final RendererModel arm1;
+	private final RendererModel armLower1;
+	private final RendererModel arm2;
+	private final RendererModel armLower2;
 
 	public ModelPhooka() {
 		textureWidth = 128;
 		textureHeight = 128;
-		leg1_1 = new RendererModel(this, 101, 0);
-		leg1_1.setRotationPoint(3.4F, 0.6F, -0.4F);
-		leg1_1.addBox(0.0F, 0.0F, -2.0F, 2, 8, 2, 0.0F);
-		rotateDeg(leg1_1, 42, -1, -30); // last arg -15F
-		foot1 = new RendererModel(this, 108, 50);
-		foot1.setRotationPoint(-0.3F, 8.3F, -0.3F);
-		foot1.addBox(0.0F, 0.0F, -2.0F, 2, 4, 3, 0.0F);
-		rotateDeg(foot1, 0.0F, 0.0F, -48F);
-		leg2_2 = new RendererModel(this, 111, 15);
-		leg2_2.setRotationPoint(1.7F, 8.0F, 0.0F);
-		leg2_2.addBox(0.0F, 0.0F, -2.0F, 2, 8, 2, 0.0F);
-		rotateDeg(leg2_2, 0, 0, -99);
-		leg1_2 = new RendererModel(this, 111, 0);
-		leg1_2.setRotationPoint(1.7F, 8.0F, 0.0F);
-		leg1_2.addBox(0.0F, 0.0F, -2.0F, 2, 8, 2, 0.0F);
-		rotateDeg(leg1_2, 0, 0, -103);
-		foot2 = new RendererModel(this, 94, 50);
-		foot2.setRotationPoint(0.0F, 7.3F, -0.3F);
-		foot2.addBox(0.0F, 0.0F, -2.0F, 2, 4, 3, 0.0F);
-		rotateDeg(foot2, 0, 0, 1F);
-		backFur = new RendererModel(this, 4, 31);
-		backFur.setRotationPoint(2.0F, -4.0F, 0.0F);
-		backFur.addBox(10.0F, 0.0F, -3.0F, 7, 4, 9, 0.0F);
-		rotateDeg(backFur, 0, 0, 15);
-		rightHorn = new RendererModel(this, 56, 0);
-		rightHorn.setRotationPoint(-2.0F, -4.0F, 0.0F);
-		rightHorn.addBox(-9.0F, -10.0F, 0.0F, 10, 11, 0, 0.0F);
-		rotateDeg(rightHorn, 0, -21, -3);
-		hip2 = new RendererModel(this, 83, 15);
-		hip2.setRotationPoint(12.3F, 4.0F, -4.5F);
-		hip2.addBox(0.0F, 0.0F, -2.0F, 5, 8, 3, 0.0F);
-		rotateDeg(hip2, 41, 1, 133); // last arg -227
-		snout1 = new RendererModel(this, 64, 41);
-		snout1.setRotationPoint(4.3F, 0.0F, 1.0F);
-		snout1.addBox(-5.0F, -3.0F, 0.0F, 4, 4, 2, 0.0F);
-		rotateDeg(snout1, 0, 0, 20);
-		snout = new RendererModel(this, 64, 51);
-		snout.setRotationPoint(5.0F, 0.0F, 1.0F);
-		snout.addBox(-5.0F, -3.0F, -1.0F, 4, 4, 4, 0.0F);
-		upperArm1 = new RendererModel(this, 0, 60);
-		upperArm1.setRotationPoint(15.0F, 0.0F, -2.9F);
-		upperArm1.addBox(-1.0F, 0.0F, -10.0F, 2, 3, 11, 0.0F);
-		rotateDeg(upperArm1, 18, 80, 0);
-		lowerTorso = new RendererModel(this, 4, 19);
-		lowerTorso.setRotationPoint(-8.8F, 5.8F, 0.0F);
-		lowerTorso.addBox(7.0F, 1.0F, -1.0F, 10, 3, 5, 0.0F);
-		rotateDeg(lowerTorso, 0, 0, -23);
-		tail2_1 = new RendererModel(this, 80, 100);
-		tail2_1.setRotationPoint(4.0F, -10.5F, 0.0F);
-		tail2_1.addBox(0.0F, -6.0F, -1.0F, 2, 7, 2, 0.0F);
-		rotateDeg(tail2_1, 0, 0, -158);
-		lowerArm2 = new RendererModel(this, 30, 79);
-		lowerArm2.setRotationPoint(-0.4F, 0.0F, -9.5F);
-		lowerArm2.addBox(-1.0F, 0.0F, -11.0F, 2, 2, 10, 0.0F);
-		rotateDeg(lowerArm2, 172, 266, -126);
-		leg2_1 = new RendererModel(this, 101, 15);
-		leg2_1.setRotationPoint(3.4F, 1.5F, 0.5F);
-		leg2_1.addBox(0.0F, 0.0F, -2.0F, 2, 8, 2, 0.0F);
-		rotateDeg(leg2_1, -37, 0, -22);
-		ear1 = new RendererModel(this, 40, 0);
-		ear1.setRotationPoint(-2.5F, -2.0F, 0.0F);
-		ear1.addBox(0.0F, -1.0F, -3.0F, 1, 2, 4, 0.0F);
-		rotateDeg(ear1, 0, 40, 24);
-		head = new RendererModel(this, 40, 21);
-		head.setRotationPoint(3.3F, 3.1F, -3.6F); // 17.3F, 5.1F, -0.6F
-		head.addBox(0F, 0F, -5F, 6, 6, 6, 0.0F);
-		rotateDeg(head, 0, 0, 90);
-		lowerArm1 = new RendererModel(this, 0, 79);
-		lowerArm1.setRotationPoint(0.6F, 3.0F, -9.5F);
-		lowerArm1.addBox(-1.0F, 0.0F, -9.0F, 2, 2, 10, 0.0F);
-		rotate(lowerArm1, 0.053930673886624786F, -1.514596724880679F, 2.211681228127214F);
-		leftHorn = new RendererModel(this, 56, 0);
-		leftHorn.setRotationPoint(-2.0F, -4.0F, 4.0F);
-		leftHorn.addBox(-9.0F, -10.0F, 0.0F, 10, 11, 0, 0.0F);
-		rotate(leftHorn, 0.0F, 0.3665191429188092F, -0.05235987755982988F);
-		ear2 = new RendererModel(this, 40, 9);
-		ear2.setRotationPoint(-2.5F, -1.0F, 5.0F);
-		ear2.addBox(0.0F, -1.0F, -3.0F, 1, 2, 4, 0.0F);
-		rotate(ear2, 0.0F, 2.251474735072685F, 0.41887902047863906F);
-		tail2 = new RendererModel(this, 80, 100);
-		tail2.setRotationPoint(1.5F, 1.7F, 0.0F);
-		tail2.addBox(0.0F, -6.0F, -1.0F, 2, 7, 2, 0.0F);
-		rotate(tail2, 0.0F, 0.0F, -2.768266726588206F);
-		torso = new RendererModel(this, 4, 2);
-		torso.setRotationPoint(1.0F, 0.0F, 0.0F);
-		torso.addBox(7.0F, 0.0F, -2.0F, 10, 4, 7, 0.0F);
-		rotateDeg(torso, 0, 0, -90);
-		tailBase = new RendererModel(this, 100, 100);
-		tailBase.setRotationPoint(6.5F, 2.0F, 1.5F);
-		tailBase.addBox(0.0F, -6.0F, -1.0F, 2, 7, 2, 0.0F);
-		rotateDeg(tailBase, 0, 0, 28);
-		hip1 = new RendererModel(this, 83, 0);
-		hip1.setRotationPoint(11.7F, 3.8F, 8.6F); // 11.7F, 3.8F, 8.6F
-		hip1.addBox(0.0F, 0.0F, -2.0F, 5, 8, 3, 0.0F);
-		rotateDeg(hip1, -41, 0, -180); // -41, 0, -227
-		tail1 = new RendererModel(this, 80, 100);
-		tail1.setRotationPoint(5.6F, -8.5F, 0.0F);
-		tail1.addBox(0.0F, -6.0F, -1.0F, 2, 7, 2, 0.0F);
-		rotate(tail1, 0.0F, 0.0F, -2.3528783646135554F);
-		upperArm2 = new RendererModel(this, 30, 60);
-		upperArm2.setRotationPoint(15.4F, 0.0F, 6.4F);
-		upperArm2.addBox(-1.0F, 0.0F, -10.0F, 2, 3, 11, 0.0F);
-		rotate(upperArm2, 0.3141592653589793F, 1.7540558982543013F, 0.0F);
 
-		// torso + head
-		torso.addChild(head);
-		head.addChild(rightHorn);
-		head.addChild(leftHorn);
+		body = new RendererModel(this);
+		body.setRotationPoint(0.0F, 10.0F, 0.0F);
+
+		torso = new RendererModel(this);
+		torso.setRotationPoint(0.0F, -9.0F, 5.0F);
+		body.addChild(torso);
+
+		upperTorso = new RendererModel(this);
+		upperTorso.setRotationPoint(0.0F, 2.0F, -1.0F);
+		rotate(upperTorso, 0.1745F, 0.0F, 0.0F);
+		torso.addChild(upperTorso);
+		upperTorso.cubeList.add(new ModelBox(upperTorso, 29, 32, -3.5F, -2.5F, -3.0F, 7, 4, 4, 0.0F, false));
+		upperTorso.cubeList.add(new ModelBox(upperTorso, 0, 29, -5.0F, -9.5F, -3.0F, 10, 7, 4, 0.0F, false));
+
+		lowerTorso = new RendererModel(this);
+		lowerTorso.setRotationPoint(0.0F, 0.0F, -2.0F);
+		rotate(lowerTorso, -0.5236F, 0.0F, 0.0F);
+		upperTorso.addChild(lowerTorso);
+		lowerTorso.cubeList.add(new ModelBox(lowerTorso, 52, 30, -2.5F, 0.0F, 0.0F, 5, 7, 3, 0.0F, false));
+
+		hip1 = new RendererModel(this);
+		hip1.setRotationPoint(-2.5F, 1.0F, 3.0F);
+		body.addChild(hip1);
+		hip1.cubeList.add(new ModelBox(hip1, 0, 86, -3.0F, -4.0F, -7.0F, 3, 5, 8, 0.0F, false));
+
+		legUpper1 = new RendererModel(this);
+		legUpper1.setRotationPoint(-1.5F, 1.0F, -7.0F);
+		rotate(legUpper1, 0.5236F, 0.0F, 0.0F);
+		hip1.addChild(legUpper1);
+		legUpper1.cubeList.add(new ModelBox(legUpper1, 25, 86, -1.0F, 0.0F, 0.0F, 2, 8, 2, 0.0F, false));
+
+		legLower1 = new RendererModel(this);
+		legLower1.setRotationPoint(0.0F, 8.0F, 2.0F);
+		legUpper1.addChild(legLower1);
+		legLower1.cubeList.add(new ModelBox(legLower1, 35, 86, -1.0F, 0.0F, -8.0F, 2, 2, 8, 0.0F, false));
+
+		foot1 = new RendererModel(this);
+		foot1.setRotationPoint(0.0F, 0.0F, -8.0F);
+		rotate(foot1, 1.0472F, 0.0F, 0.0F);
+		legLower1.addChild(foot1);
+		foot1.cubeList.add(new ModelBox(foot1, 57, 86, -1.5F, -3.0F, -2.0F, 3, 4, 2, 0.0F, false));
+
+		hip2 = new RendererModel(this);
+		hip2.setRotationPoint(2.5F, 1.0F, 3.0F);
+		body.addChild(hip2);
+		hip2.cubeList.add(new ModelBox(hip2, 0, 70, 0.0F, -4.0F, -7.0F, 3, 5, 8, 0.0F, false));
+
+		legUpper2 = new RendererModel(this);
+		legUpper2.setRotationPoint(-6.5F, 1.0F, -7.0F);
+		rotate(legUpper2, 0.5236F, 0.0F, 0.0F);
+		hip2.addChild(legUpper2);
+		legUpper2.cubeList.add(new ModelBox(legUpper2, 25, 70, 7.0F, 0.0F, 0.0F, 2, 8, 2, 0.0F, false));
+
+		legLower2 = new RendererModel(this);
+		legLower2.setRotationPoint(0.0F, 8.0F, 2.0F);
+		legUpper2.addChild(legLower2);
+		legLower2.cubeList.add(new ModelBox(legLower2, 35, 70, 7.0F, 0.0F, -8.0F, 2, 2, 8, 0.0F, false));
+
+		foot2 = new RendererModel(this);
+		foot2.setRotationPoint(0.0F, 0.0F, -8.0F);
+		rotate(foot2, 1.0472F, 0.0F, 0.0F);
+		legLower2.addChild(foot2);
+		foot2.cubeList.add(new ModelBox(foot2, 57, 70, 6.5F, -3.0F, -2.0F, 3, 4, 2, 0.0F, false));
+
+		head = new RendererModel(this);
+		head.setRotationPoint(0.0F, -6.5F, 2.0F);
+		head.cubeList.add(new ModelBox(head, 0, 14, -3.0F, -5.5F, -5.0F, 6, 6, 6, 0.0F, false));
+		head.cubeList.add(new ModelBox(head, 25, 14, -2.0F, -3.5F, -9.0F, 4, 4, 4, 0.0F, false));
+
+		horn1 = new RendererModel(this);
+		horn1.setRotationPoint(-2.0F, -5.5F, -2.0F);
+		rotate(horn1, 1.5708F, 1.3963F, 0.0F);
+		head.addChild(horn1);
+		horn1.cubeList.add(new ModelBox(horn1, 0, 0, -8.0F, 0.0F, -1.0F, 10, 0, 11, 0.0F, false));
+
+		horn2 = new RendererModel(this);
+		horn2.setRotationPoint(2.0F, -5.5F, -2.0F);
+		rotate(horn2, 1.5708F, 1.7453F, 0.0F);
+		head.addChild(horn2);
+		horn2.cubeList.add(new ModelBox(horn2, 44, 0, -8.0F, 0.0F, -1.0F, 10, 0, 11, 0.0F, false));
+
+		snout1 = new RendererModel(this);
+		snout1.setRotationPoint(0.0F, -5.5F, -5.0F);
+		rotate(snout1, 0.4363F, 0.0F, 0.0F);
 		head.addChild(snout1);
-		head.addChild(snout);
+		snout1.cubeList.add(new ModelBox(snout1, 42, 14, -2.0F, 0.25F, -4.0F, 4, 2, 4, 0.0F, false));
+
+		ear1 = new RendererModel(this);
+		ear1.setRotationPoint(-3.0F, -3.5F, -1.0F);
+		rotate(ear1, -1.0472F, -0.2618F, -0.4363F);
 		head.addChild(ear1);
+		ear1.cubeList.add(new ModelBox(ear1, 42, 21, -1.0F, -3.0F, -1.0F, 1, 4, 2, 0.0F, false));
+
+		ear2 = new RendererModel(this);
+		ear2.setRotationPoint(3.0F, -3.5F, -1.0F);
+		rotate(ear2, -1.0472F, 0.2618F, 0.4363F);
 		head.addChild(ear2);
+		ear2.cubeList.add(new ModelBox(ear2, 49, 21, 0.0F, -3.0F, -1.0F, 1, 4, 2, 0.0F, false));
 
-		// torso + upperArm1
-		torso.addChild(upperArm1);
-		upperArm1.addChild(lowerArm1);
+		tailBase = new RendererModel(this);
+		tailBase.setRotationPoint(0.0F, 10.0F, 3.0F);
+		rotate(tailBase, 0.3491F, 0.0F, 0.0F);
+		tailBase.cubeList.add(new ModelBox(tailBase, 90, 0, -1.0F, -2.0F, 0.0F, 2, 2, 7, 0.0F, false));
 
-		// torso + upperArm2
-		torso.addChild(upperArm2);
-		upperArm2.addChild(lowerArm2);
-
-		// torso + lowerTorso
-		torso.addChild(lowerTorso);
-		lowerTorso.addChild(hip1);
-		lowerTorso.addChild(hip2);
-		lowerTorso.addChild(tailBase);
-		// tailBase
+		tail1 = new RendererModel(this);
+		tail1.setRotationPoint(0.0F, 0.0F, 7.0F);
+		rotate(tail1, 0.4363F, 0.0F, 0.0F);
 		tailBase.addChild(tail1);
+		tail1.cubeList.add(new ModelBox(tail1, 90, 11, -1.0F, -2.0F, 0.0F, 2, 2, 7, 0.0F, false));
+
+		tail2 = new RendererModel(this);
+		tail2.setRotationPoint(0.0F, 0.0F, 7.0F);
+		rotate(tail2, 0.6109F, 0.0F, 0.0F);
 		tail1.addChild(tail2);
-		tail2.addChild(tail2_1);
-		// hip1
-		hip1.addChild(leg1_1);
-		leg1_1.addChild(leg1_2);
-		leg1_2.addChild(foot1);
-		// hip2 + leg
-		hip2.addChild(leg2_1);
-		leg2_1.addChild(leg2_2);
-		leg2_2.addChild(foot2);
-		
-		// torso + backFur
-		torso.addChild(backFur);
+		tail2.cubeList.add(new ModelBox(tail2, 90, 22, -1.0F, -2.0F, 0.0F, 2, 2, 7, 0.0F, false));
+
+		tail3 = new RendererModel(this);
+		tail3.setRotationPoint(0.0F, 0.0F, 7.0F);
+		rotate(tail3, 0.3491F, 0.0F, 0.0F);
+		tail2.addChild(tail3);
+		tail3.cubeList.add(new ModelBox(tail3, 90, 33, -1.0F, -2.0F, 0.0F, 2, 2, 7, 0.0F, false));
+
+		arm1 = new RendererModel(this);
+		arm1.setRotationPoint(-5.0F, -5.0F, 2.0F);
+		arm1.cubeList.add(new ModelBox(arm1, 0, 44, -2.0F, -1.0F, -2.0F, 2, 9, 3, 0.0F, false));
+
+		armLower1 = new RendererModel(this);
+		armLower1.setRotationPoint(-1.0F, 8.0F, 0.0F);
+		rotate(armLower1, 0.0F, -0.6109F, 0.0F);
+		arm1.addChild(armLower1);
+		armLower1.cubeList.add(new ModelBox(armLower1, 11, 44, -1.0F, 0.0F, -9.0F, 2, 2, 10, 0.0F, false));
+
+		arm2 = new RendererModel(this);
+		arm2.setRotationPoint(5.0F, -5.0F, 2.0F);
+		arm2.cubeList.add(new ModelBox(arm2, 36, 44, 0.0F, -1.0F, -2.0F, 2, 9, 3, 0.0F, false));
+
+		armLower2 = new RendererModel(this);
+		armLower2.setRotationPoint(1.0F, 8.0F, 0.0F);
+		rotate(armLower2, 0.0F, 0.6109F, 0.0F);
+		arm2.addChild(armLower2);
+		armLower2.cubeList.add(new ModelBox(armLower2, 47, 44, -1.0F, 0.0F, -9.0F, 2, 2, 10, 0.0F, false));
 	}
 
 	@Override
 	public void render(final PhookaEntity entity, final float limbSwing, final float limbSwingAmount, final float ageInTicks,
 			final float netHeadYaw, final float headPitch, final float scale) {
 		GlStateManager.pushMatrix();
-		GlStateManager.rotatef(90F, 0F, 1F, 0F);
 		this.setRotationAngles(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
-		GlStateManager.translatef(0F, 2.0F * scale, 0F);
-		torso.render(scale);
+		// if sitting, apply transformations
+		if(entity.isSitting()) {
+			GlStateManager.translatef(0F, 12F * scale, 4F * scale);
+		} else {
+			GlStateManager.translatef(0F, -2F * scale, 0F);
+		}
 		
+		body.render(scale);
+		head.render(scale);
+		tailBase.render(scale);
+		arm1.render(scale);
+		arm2.render(scale);
 		
 		GlStateManager.popMatrix();
 	}
@@ -196,26 +207,41 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 	@Override
 	public void setRotationAngles(final PhookaEntity entity, final float limbSwing, final float limbSwingAmount,
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scaleFactor) {
-
 		// tail
-		float tailAngleY = (float) Math.cos(entity.ticksExisted * 0.05F) * 0.1F;
-		tailBase.rotateAngleY = tailAngleY;
-		tail1.rotateAngleY = tailAngleY * 0.5F;
-		tail2.rotateAngleY = tailAngleY * 0.25F;
+		float tailAngleZ = (float) Math.cos(entity.ticksExisted * 0.1F) * 0.09F;
+		tailBase.rotateAngleZ = tailAngleZ;
+		tail1.rotateAngleZ = tailAngleZ * 0.5F;
+		tail2.rotateAngleZ = tailAngleZ * 0.25F;
 		// head
-		//this.head.rotateAngleZ = (float)Math.toRadians(90 + headPitch);
 		this.head.rotateAngleY = (float)Math.toRadians(netHeadYaw);
-
-		// DEBUG:
-		//hip1.rotateAngleZ += 0.02F;
-//		head.rotateAngleZ += 0.02F;
-//		tailBase.rotateAngleX += 0.02F;
+		this.head.rotateAngleX = (float)Math.toRadians(headPitch);
+		// legs
+		if(entity.isSitting()) {
+			// SITTING
+			final float rad15 = (float)Math.toRadians(15D);
+			final float rad20 = (float)Math.toRadians(20D);
+			hip1.rotateAngleX = -rad20;
+			legUpper1.rotateAngleX = (3 * rad15) + rad20;
+			legLower1.rotateAngleX = -(3 * rad15);
+			hip2.rotateAngleX = -rad20;
+			legUpper2.rotateAngleX = (3 * rad15) + rad20;
+			legLower2.rotateAngleX = -(3 * rad15);
+		} else {
+			// WALKING
+			final float speed = 1.35F;
+			final float angle = 1.0F;
+			final float rad30 = (float)Math.toRadians(30D);
+			// leg angle 1
+			final float legAngle1 = MathHelper.cos(limbSwing * speed) * angle * limbSwingAmount;
+			// leg angle 2
+			final float legAngle2 = MathHelper.sin(limbSwing * speed) * angle * limbSwingAmount;
+			hip1.rotateAngleX = legAngle1 - rad30;
+			foot1.rotateAngleX = hip1.rotateAngleX + (rad30 * 2);
+			hip2.rotateAngleX = legAngle2 + rad30;
+			foot2.rotateAngleX = hip2.rotateAngleX + (rad30 * 2);
+		}
 	}
 	
-	private static void rotateDeg(final RendererModel model, final float x, final float y, final float z) {
-		rotate(model, (float)Math.toRadians(x), (float)Math.toRadians(y), (float)Math.toRadians(z));
-	}
-
 	private static void rotate(final RendererModel model, final float x, final float y, final float z) {
 		model.rotateAngleX = x;
 		model.rotateAngleY = y;

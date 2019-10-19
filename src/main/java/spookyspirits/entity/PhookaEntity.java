@@ -59,6 +59,9 @@ public class PhookaEntity extends MonsterEntity {
 	
 	// Despawning Ticks: 0 means NOT despawning, 1 to [MAX] means starting to despawn
 	private static final DataParameter<Byte> DESPAWNING_TICKS = EntityDataManager.createKey(PhookaEntity.class, DataSerializers.BYTE);
+	private static final DataParameter<Boolean> SITTING = EntityDataManager.createKey(PhookaEntity.class, DataSerializers.BOOLEAN);
+
+	
 	private static final int MAX_DESPAWNING_TICKS = 50;
 	private static final String KEY_DESPAWNING_TICKS = "DespawningTicks";	
 	
@@ -90,6 +93,7 @@ public class PhookaEntity extends MonsterEntity {
 	protected void registerData() {
 		super.registerData();
 		this.getDataManager().register(DESPAWNING_TICKS, Byte.valueOf((byte)0));
+		this.getDataManager().register(SITTING, Boolean.valueOf(false));
 	}
 	
 	@Override
@@ -130,6 +134,16 @@ public class PhookaEntity extends MonsterEntity {
 		
 	}
 	
+	public boolean isSitting() {
+		return this.getDataManager().get(SITTING);
+	}
+	
+	public void setSitting(final boolean isSitting) {
+		if(isSitting != this.getDataManager().get(SITTING)) {
+			this.getDataManager().set(SITTING, isSitting);
+		}
+	}
+	
 	@OnlyIn(Dist.CLIENT)
 	public float getFadeFactor() {
 		final float FADE_AT = MAX_DESPAWNING_TICKS / 4;
@@ -145,10 +159,10 @@ public class PhookaEntity extends MonsterEntity {
 		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && player.getHeldItem(hand).isEmpty()) {
 			// DEBUG
 			//player.addPotionEffect(new EffectInstance(ModObjects.PHOOKA_CURSE_EGGS, PhookaEffect.Eggs.INTERVAL * 16 + 2));
-			
+			this.setSitting(!this.isSitting());
 			final PhookaRiddle riddle = getRiddleFor(player);
 			if(riddle != null) {
-				GuiLoader.loadPhookaGui(this, player, riddle);
+			//	GuiLoader.loadPhookaGui(this, player, riddle);
 			}
 			return true;
 		}
