@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+
+import com.google.common.collect.Lists;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
@@ -65,12 +68,30 @@ public final class PhookaRiddles {
 		}
 	}
 
+	/**
+	 * @param rand a Random object
+	 * @return a randomly chosen PhookaRiddle if any exist, otherwise null
+	 **/
 	@Nullable
 	public static PhookaRiddle getRandom(final Random rand) {
-		final List<PhookaRiddle> values = new ArrayList<>();
-		values.addAll(REGISTRY.values());
+		return getRandom(rand, null);
+	}
+	
+	/**
+	 * 
+	 * @param rand a Random object
+	 * @param difficulty the difficulty type that should be chosen
+	 * @return a randomly chosen PhookaRiddle of the chosen type if any exist, otherwise null
+	 **/
+	@Nullable
+	public static PhookaRiddle getRandom(final Random rand, @Nullable final PhookaRiddle.Type difficulty) {
+		final List<PhookaRiddle> values = 
+				(difficulty == null) ? Lists.newArrayList(REGISTRY.values())
+				: REGISTRY.values().stream().filter(r -> r.getDifficulty() == difficulty).collect(Collectors.toList());
+		
 		if (values.isEmpty()) {
-			SpookySpirits.LOGGER.error("Tried to pick a random PhookaRiddle, but there weren't any registered!");
+			SpookySpirits.LOGGER.error("Tried to pick a random PhookaRiddle, but failed to find any of type '" 
+					+ (difficulty != null ? difficulty.toString() : "null") + "'");
 			return null;
 		}
 		return values.get(rand.nextInt(values.size()));

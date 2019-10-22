@@ -83,7 +83,7 @@ public class CommonProxy {
 		
 		event.getRegistry().register(
 				EntityType.Builder.create(PhookaEntity::new, EntityClassification.CREATURE)
-					.size(0.8F, 1.4F)
+					.size(0.85F, 2.3F)
 					.build("phooka").setRegistryName(SpookySpirits.MODID, "phooka")
 		);
 		

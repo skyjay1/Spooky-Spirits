@@ -12,7 +12,7 @@ public class RenderPhooka extends LivingRenderer<PhookaEntity, ModelPhooka> {
 	private static final ResourceLocation TEXTURE = new ResourceLocation(SpookySpirits.MODID, "textures/entities/phooka.png");
 
 	public RenderPhooka(EntityRendererManager manager) {
-		super(manager, new ModelPhooka(), 0.35F);
+		super(manager, new ModelPhooka(), 0.5F);
 	}
 
 	@Override

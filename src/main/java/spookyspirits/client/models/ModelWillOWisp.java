@@ -30,7 +30,7 @@ public class ModelWillOWisp extends EntityModel<WillOWispEntity> {
 		
 		this.setRotationAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
 		// fade in and out
-		float fading = WillOWispEntity.getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId(), 0.08F, 1.55F);
+		float fading = getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId(), 0.08F, 1.1F);
 		GlStateManager.enableBlend();
 		GlStateManager.enableNormalize();
 		GlStateManager.blendFunc(770, 771);
@@ -46,5 +46,21 @@ public class ModelWillOWisp extends EntityModel<WillOWispEntity> {
 			final float ageInTicks, final float netHeadYaw, final float headPitch, final float scaleFactor) {
 		float bobbing = (float)Math.sin((entity.ticksExisted + entity.getEntityId()) * 0.09D) * 0.28F;
 		GlStateManager.translatef(0F, (6.0F + bobbing) * scaleFactor, 0F);
+	}
+	
+	/**
+	 * @param ticks the number of ticks elapsed since beginning
+	 * @param fadeSpeed affects the amount of change in alpha per tick
+	 * @param amplitude affects the amount of time spent fully transparent or fully opaque
+	 * @return a number between 0.0F and 0.95F, where 0.0F is fully transparent
+	 **/
+	private static float getFadeFactor(final int ticks, final float fadeSpeed, final float amplitude) {
+		// downshift: fade factor will be shifted DOWN by 4%
+		// this means more time will be spent at lower values
+		float downShift = amplitude * 0.04F;
+		// fade: a number between (-amplitude) and (amplitude), with (downshift) subtracted
+		float fade = (float)Math.sin(ticks * fadeSpeed) * amplitude - downShift;
+		// return a single float between 0 and 0.95 (time spent outside of these bounds is clamped)
+		return MathHelper.clamp(fade, 0.0F, 0.95F);
 	}
 }

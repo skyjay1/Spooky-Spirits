@@ -12,6 +12,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.IBucketPickupHandler;
 import net.minecraft.block.ILiquidContainer;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.IFluidState;
@@ -25,6 +26,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
@@ -34,7 +36,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import spookyspirits.entity.WillOWispEntity;
+import spookyspirits.entity.ILightEntity;
 
 /**
  * Previously written code, adapted from Extra Golems mod
@@ -70,31 +72,45 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 	public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
 		// make a slightly expanded AABB to check for the golem
 		final AxisAlignedBB toCheck = new AxisAlignedBB(pos).grow(0.5D);
-		// we'll probably only ever get one golem, but it doesn't hurt to be safe and check them all
-		final List<WillOWispEntity> list = worldIn.getEntitiesWithinAABB(WillOWispEntity.class, toCheck);
+		final List<LivingEntity> list = worldIn.getEntitiesWithinAABB(LivingEntity.class, toCheck);
+		// check if list contains an ILightEntity
+		boolean shouldStay = false;
+		int lightLevel = 0;
+		for(final LivingEntity e : list) {
+			if(e instanceof ILightEntity) {
+				shouldStay = true;
+				lightLevel = MathHelper.clamp(((ILightEntity)e).getLightLevel(), 0, 15);
+				break;
+			}
+		}
 
-		if (!list.isEmpty()) {
-			// light golem is nearby, schedule another update
+		if (shouldStay) {
+			// update light if necessary
+			if(state.get(LIGHT_LEVEL).intValue() != lightLevel) {
+				worldIn.setBlockState(pos, state.with(LIGHT_LEVEL, lightLevel), 2);
+			}
+			// schedule another update later
 			worldIn.getPendingBlockTicks().scheduleTick(pos, state.getBlock(), this.tickRate(worldIn));
 		} else {
+			// remove immediately
 			this.remove(worldIn, state, pos, 3);
 		}
 	}
 
 	@Override
-	public int getLightValue(BlockState state) {
+	public int getLightValue(final BlockState state) {
 		return state.get(LIGHT_LEVEL);
 	}
 
 	@Override
-	protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+	protected void fillStateContainer(final StateContainer.Builder<Block, BlockState> builder) {
 		super.fillStateContainer(builder);
 		builder.add(BlockStateProperties.WATERLOGGED);
 		builder.add(LIGHT_LEVEL);
 	}
 
 	@Override
-	public Fluid pickupFluid(IWorld worldIn, BlockPos pos, BlockState state) {
+	public Fluid pickupFluid(final IWorld worldIn, final BlockPos pos, final BlockState state) {
 		if (state.get(BlockStateProperties.WATERLOGGED)) {
 			worldIn.setBlockState(pos, state.with(BlockStateProperties.WATERLOGGED, Boolean.valueOf(false)), 3);
 			return Fluids.WATER;
@@ -104,18 +120,18 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 	}
 
 	@Override
-	public IFluidState getFluidState(BlockState state) {
+	public IFluidState getFluidState(final BlockState state) {
 		return state.get(BlockStateProperties.WATERLOGGED) ? Fluids.WATER.getStillFluidState(false)
 			: super.getFluidState(state);
 	}
 
 	@Override
-	public boolean canContainFluid(IBlockReader worldIn, BlockPos pos, BlockState state, Fluid fluidIn) {
+	public boolean canContainFluid(final IBlockReader worldIn, final BlockPos pos, final BlockState state, final Fluid fluidIn) {
 		return !state.get(BlockStateProperties.WATERLOGGED) && fluidIn == Fluids.WATER;
 	}
 
 	@Override
-	public boolean receiveFluid(IWorld worldIn, BlockPos pos, BlockState state, IFluidState fluidStateIn) {
+	public boolean receiveFluid(final IWorld worldIn, final BlockPos pos, final BlockState state, final IFluidState fluidStateIn) {
 		if (!state.get(BlockStateProperties.WATERLOGGED) && fluidStateIn.getFluid() == Fluids.WATER) {
 			if (!worldIn.isRemote()) {
 				worldIn.setBlockState(pos, state.with(BlockStateProperties.WATERLOGGED, Boolean.valueOf(true)), 3);
@@ -129,7 +145,7 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 	}
 
 	@Override
-	public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+	public void onBlockAdded(final BlockState state, final World worldIn, final BlockPos pos, final BlockState oldState, final boolean isMoving) {
 		if(this.ticksRandomly(state)) {
 			worldIn.getPendingBlockTicks().scheduleTick(pos, this, this.tickRate(worldIn));
 			worldIn.getPendingFluidTicks().scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
@@ -143,7 +159,7 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 	}
 
 	@Override
-	public int tickRate(IWorldReader worldIn) {
+	public int tickRate(final IWorldReader worldIn) {
 		return this.ticksRandomly ? tickRate : super.tickRate(worldIn);
 	}
 	
@@ -183,19 +199,19 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 	}
 
 	@Override
-	public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
+	public boolean isReplaceable(final BlockState state, final BlockItemUseContext useContext) {
 		return true;
 	}
 
 	@Nullable
 	@Override
-	public BlockState getStateForPlacement(BlockItemUseContext context) {
+	public BlockState getStateForPlacement(final BlockItemUseContext context) {
 		return getDefaultState();
 	}
 
 	@Override
-	public BlockState getStateForPlacement(BlockState state, Direction facing, BlockState state2, IWorld world,
-			BlockPos pos1, BlockPos pos2, Hand hand) {
+	public BlockState getStateForPlacement(final BlockState state, final Direction facing, final BlockState state2, final IWorld world,
+			final BlockPos pos1, final BlockPos pos2, final Hand hand) {
 		return getDefaultState();
 	}
 
@@ -204,7 +220,7 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 	 */
 	@Deprecated
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
+	public BlockRenderType getRenderType(final BlockState state) {
 		return BlockRenderType.INVISIBLE;
 	}
 
@@ -225,7 +241,7 @@ public class BlockWispLight extends Block implements IBucketPickupHandler, ILiqu
 	}
 
 	@Override
-	public void onLanded(IBlockReader worldIn, Entity entityIn) {
+	public void onLanded(final IBlockReader worldIn, final Entity entityIn) {
 		// do nothing
 	}
 

@@ -88,21 +88,21 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 		hip2.cubeList.add(new ModelBox(hip2, 0, 70, 0.0F, -4.0F, -7.0F, 3, 5, 8, 0.0F, false));
 
 		legUpper2 = new RendererModel(this);
-		legUpper2.setRotationPoint(-6.5F, 1.0F, -7.0F);
-		rotate(legUpper2, 0.5236F, 0.0F, 0.0F);
+		legUpper2.setRotationPoint(1.5F, 1.0F, -7.0F);
+		rotate(legUpper2, 0.5236F, 0F, 0.0F);
 		hip2.addChild(legUpper2);
-		legUpper2.cubeList.add(new ModelBox(legUpper2, 25, 70, 7.0F, 0.0F, 0.0F, 2, 8, 2, 0.0F, false));
+		legUpper2.cubeList.add(new ModelBox(legUpper2, 25, 70, -1.0F, 0.0F, 0.0F, 2, 8, 2, 0.0F, false));
 
 		legLower2 = new RendererModel(this);
 		legLower2.setRotationPoint(0.0F, 8.0F, 2.0F);
 		legUpper2.addChild(legLower2);
-		legLower2.cubeList.add(new ModelBox(legLower2, 35, 70, 7.0F, 0.0F, -8.0F, 2, 2, 8, 0.0F, false));
+		legLower2.cubeList.add(new ModelBox(legLower2, 35, 70, -1.0F, 0.0F, -8.0F, 2, 2, 8, 0.0F, false));
 
 		foot2 = new RendererModel(this);
 		foot2.setRotationPoint(0.0F, 0.0F, -8.0F);
 		rotate(foot2, 1.0472F, 0.0F, 0.0F);
 		legLower2.addChild(foot2);
-		foot2.cubeList.add(new ModelBox(foot2, 57, 70, 6.5F, -3.0F, -2.0F, 3, 4, 2, 0.0F, false));
+		foot2.cubeList.add(new ModelBox(foot2, 57, 70, -1.5F, -3.0F, -2.0F, 3, 4, 2, 0.0F, false));
 
 		head = new RendererModel(this);
 		head.setRotationPoint(0.0F, -6.5F, 2.0F);
@@ -190,11 +190,19 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 		this.setRotationAngles(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
 		// if sitting, apply transformations
 		if(entity.isSitting()) {
-			GlStateManager.translatef(0F, 12F * scale, 4F * scale);
+			GlStateManager.translatef(0F, 8F * scale, -2F * scale);
 		} else {
-			GlStateManager.translatef(0F, -2F * scale, 0F);
+			GlStateManager.translatef(0F, -3.25F * scale, 0F * scale);
 		}
 		
+		// enable transparency
+		final float fade = MathHelper.clamp(entity.getFadeFactor(), 0.0F, 0.6F);
+		GlStateManager.enableBlend();
+		GlStateManager.enableNormalize();
+		GlStateManager.blendFunc(770, 771);
+		GlStateManager.color4f(0.0F, 0.0F, 0.0F, fade);
+		
+		// actually render the parts
 		body.render(scale);
 		head.render(scale);
 		tailBase.render(scale);
@@ -217,29 +225,58 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 		this.head.rotateAngleX = (float)Math.toRadians(headPitch);
 		// legs
 		if(entity.isSitting()) {
-			// SITTING
-			final float rad15 = (float)Math.toRadians(15D);
-			final float rad20 = (float)Math.toRadians(20D);
-			hip1.rotateAngleX = -rad20;
-			legUpper1.rotateAngleX = (3 * rad15) + rad20;
-			legLower1.rotateAngleX = -(3 * rad15);
-			hip2.rotateAngleX = -rad20;
-			legUpper2.rotateAngleX = (3 * rad15) + rad20;
-			legLower2.rotateAngleX = -(3 * rad15);
+			sit();
 		} else {
-			// WALKING
-			final float speed = 1.35F;
-			final float angle = 1.0F;
+			// STANDING / WALKING
+			final float speed = 1.15F;
+			final float angle = 1.6F;
 			final float rad30 = (float)Math.toRadians(30D);
-			// leg angle 1
-			final float legAngle1 = MathHelper.cos(limbSwing * speed) * angle * limbSwingAmount;
-			// leg angle 2
-			final float legAngle2 = MathHelper.sin(limbSwing * speed) * angle * limbSwingAmount;
-			hip1.rotateAngleX = legAngle1 - rad30;
-			foot1.rotateAngleX = hip1.rotateAngleX + (rad30 * 2);
-			hip2.rotateAngleX = legAngle2 + rad30;
-			foot2.rotateAngleX = hip2.rotateAngleX + (rad30 * 2);
+			final float rad40 = (float)Math.toRadians(40D);
+			// use sin and cosine to determine limb angles
+			final float limbAngle1 = MathHelper.cos(limbSwing * speed) * angle * limbSwingAmount;
+			final float limbAngle2 = MathHelper.cos(limbSwing * speed + (float)Math.PI) * angle * limbSwingAmount;
+			// hips
+			hip1.rotateAngleX = limbAngle1 + rad40;
+			hip2.rotateAngleX = limbAngle2 + rad40;
+			// feet
+			foot1.rotateAngleX = rad30 * 3.0F - hip1.rotateAngleX;
+			foot2.rotateAngleX = rad30 * 3.0F - hip2.rotateAngleX;
+			// arms
+			arm1.rotateAngleX = limbAngle2 * 0.65F;
+			arm2.rotateAngleX = limbAngle1 * 0.65F;
+			// hips and legs (constants used when standing)
+			//if(Math.abs(hip1.rotateAngleY) > 0.001F) {
+				stand();
+			//}
 		}
+	}
+	
+	/**
+	 * Sets angles for hips, legs, feet, and arms to adapt a "sitting" pose
+	 **/
+	private void sit() {
+		final float rad15 = (float)Math.toRadians(15D);
+		final float rad20 = (float)Math.toRadians(20D);
+		// all of these are constants
+		hip1.rotateAngleX = hip2.rotateAngleX = -rad20;
+		hip1.rotateAngleY = rad20;
+		hip2.rotateAngleY = -rad20;
+		legUpper1.rotateAngleY = -rad20;
+		legUpper2.rotateAngleY = rad20;
+		legUpper1.rotateAngleX = legUpper2.rotateAngleX = (3 * rad15) + rad20;
+		legLower1.rotateAngleX = legLower2.rotateAngleX = -(3 * rad15);
+		foot1.rotateAngleX = foot2.rotateAngleX = 3 * rad20;
+		arm1.rotateAngleX = arm2.rotateAngleX = 0;
+	}
+	
+	/**
+	 * Undo some of the angles set in {@link #sit()}
+	 **/
+	private void stand() {
+		hip1.rotateAngleY = hip2.rotateAngleY = 0.0F;
+		legUpper1.rotateAngleX = legUpper2.rotateAngleX = 0;
+		legUpper1.rotateAngleY = legUpper2.rotateAngleY = 0;
+		legLower1.rotateAngleX = legLower2.rotateAngleX = 0;
 	}
 	
 	private static void rotate(final RendererModel model, final float x, final float y, final float z) {

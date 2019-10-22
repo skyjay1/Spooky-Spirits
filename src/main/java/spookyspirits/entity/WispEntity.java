@@ -40,18 +40,28 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootTables;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.registries.ForgeRegistries;
 import spookyspirits.effect.PhookaEffect;
+import spookyspirits.entity.goal.PlaceLightGoal;
 import spookyspirits.init.ModObjects;
 import spookyspirits.init.SpiritsConfig;
 import spookyspirits.init.SpookySpirits;
 
-public class WispEntity extends FlyingEntity {
+public class WispEntity extends FlyingEntity implements ILightEntity {
 	
 	public WispEntity(EntityType<? extends WispEntity> type, World world) {
 		super(type, world);
+	}
+	
+
+	@Override
+	protected void registerGoals() {
+		super.registerGoals();
+		this.goalSelector.addGoal(5, new PlaceLightGoal(this, getLightLevel()));
 	}
 	
 	@Override
@@ -134,6 +144,22 @@ public class WispEntity extends FlyingEntity {
 		return false;
 	}
 	
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public int getBrightnessForRender() {
+		return (int) (15728880F);
+	}
+
+	@Override
+	public float getBrightness() {
+		return 1.0F;
+	}
+	
+	@Override
+	public int getLightLevel() {
+		return 11;
+	}
+	
 	/** 
 	 * Tries to find the lowest y-value that is still air 
 	 * @param p origin (does not affect x and z)
@@ -169,8 +195,10 @@ public class WispEntity extends FlyingEntity {
 					.defineList("potion_blacklist", 
 						Lists.newArrayList(
 								Effects.WITHER.getRegistryName().toString(), Effects.LEVITATION.getRegistryName().toString(),
-								Effects.HERO_OF_THE_VILLAGE.getRegistryName().toString(), SpookySpirits.MODID + PhookaEffect.Invisibility.NAME
-								), // TODO add other modded effects
+								Effects.HERO_OF_THE_VILLAGE.getRegistryName().toString(), PhookaEffect.Invisibility.REGISTRY_NAME.toString(),
+								PhookaEffect.Footsteps.REGISTRY_NAME.toString(), PhookaEffect.Sponge.REGISTRY_NAME.toString(),
+								PhookaEffect.Eggs.REGISTRY_NAME.toString()
+								),
 						o -> o instanceof String && 
 						ForgeRegistries.POTIONS.containsKey(new ResourceLocation((String)o)));
 		

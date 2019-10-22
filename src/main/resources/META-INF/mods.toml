@@ -4,17 +4,13 @@
 modLoader="javafml"
 # A version range to match for said mod loader
 loaderVersion="[2.0,)"
-# A URL to query for updates
-#updateJSONURL="http://myurl.me/"
-# A URL to refer people to when problems occur with this mod
-#issueTrackerURL="https://github.com/skyjay1/Nomadic-Tents/issues"
 
 [[mods]]
     modId="spookyspirits"
     version="0.0.1-beta"
     displayName="Spooky Spirits"
     # multi line!
-    description='''Made for SpookyJam 2019 by skyjay1 and TheOneTraveler'''
+    description='''Made for SpookyJam 2019 by skyjay1, with help from TheOneTraveler'''
     [[dependencies.spookyspirits]]
         modId="forge"
         mandatory=true

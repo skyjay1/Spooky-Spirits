@@ -9,7 +9,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SweetBerryBushBlock;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.goal.Goal;
@@ -17,6 +19,8 @@ import net.minecraft.entity.ai.goal.HurtByTargetGoal;
 import net.minecraft.entity.ai.goal.LookAtGoal;
 import net.minecraft.entity.ai.goal.LookRandomlyGoal;
 import net.minecraft.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.entity.ai.goal.MoveTowardsTargetGoal;
+import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -27,6 +31,7 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -47,12 +52,12 @@ import spookyspirits.util.PhookaRiddles;
  * [X] wherever the phooka spawned, it would sit waiting for the playing to interact with it. 
  * [X] interacting with a phooka brings up a GUI which is a riddle minigame, 
  * [X] it selects from several pre-set riddles, you choose from multiple answers
- * [ ] depending on the nature of the riddle, the phooka would bless you with certain effects 
+ * [X] depending on the nature of the riddle, the phooka would bless you with certain effects 
  * which would last for a few days, 
- * [ ] it would also remove any curses blighted upon the player no matter what riddle the player solves. 
- * [ ] however, if the player puts in the wrong answer to the riddle, or attacks the phooka, 
+ * [X] it would also remove any curses blighted upon the player no matter what riddle the player solves. 
+ * [X] however, if the player puts in the wrong answer to the riddle, or attacks the phooka, 
  * the phooka would curse the player. 
- * [ ] curses could range from anything to blindness debuffs, to monsters spawning more 
+ * [X] curses could range from anything to blindness debuffs, to monsters spawning more 
  * frequently and closer to the player.
  */
 public class PhookaEntity extends MonsterEntity {
@@ -61,9 +66,10 @@ public class PhookaEntity extends MonsterEntity {
 	private static final DataParameter<Byte> DESPAWNING_TICKS = EntityDataManager.createKey(PhookaEntity.class, DataSerializers.BYTE);
 	private static final DataParameter<Boolean> SITTING = EntityDataManager.createKey(PhookaEntity.class, DataSerializers.BOOLEAN);
 
+	private static final String KEY_DESPAWNING_TICKS = "DespawningTicks";
+	private static final String KEY_SITTING = "Sitting";
 	
 	private static final int MAX_DESPAWNING_TICKS = 50;
-	private static final String KEY_DESPAWNING_TICKS = "DespawningTicks";	
 	
 	public PhookaEntity(final EntityType<? extends MonsterEntity> type, final World world) {
 		super(type, world);
@@ -73,10 +79,11 @@ public class PhookaEntity extends MonsterEntity {
 	protected void registerGoals() {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
-		this.goalSelector.addGoal(6, new LookAtGoal(this, PlayerEntity.class, 6.0F));
-		this.goalSelector.addGoal(7, new LookRandomlyGoal(this));
-		this.goalSelector.addGoal(8, new SpoilBerriesGoal(this, rand.nextInt(3) + 3));
-
+		this.goalSelector.addGoal(2, new MoveTowardsTargetGoal(this, 1.0D, 9.0F));
+		this.goalSelector.addGoal(3, new WanderAvoidWaterGoal(this, 0.7D));
+		this.goalSelector.addGoal(4, new LookAtGoal(this, PlayerEntity.class, 6.0F));
+		this.goalSelector.addGoal(5, new LookRandomlyGoal(this));
+		this.goalSelector.addGoal(6, new SpoilBerriesGoal(this, rand.nextInt(3) + 3));
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 	}
 
@@ -84,8 +91,8 @@ public class PhookaEntity extends MonsterEntity {
 	protected void registerAttributes() {
 		super.registerAttributes();
 		this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(14.0D);
-		this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.22D);
-		this.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(3.0D);
+		this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.29D);
+		this.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(5.0D);
 		this.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(0.8D);
 	}
 	
@@ -114,8 +121,17 @@ public class PhookaEntity extends MonsterEntity {
 						this.remove();
 					}
 				}
+				// update sitting
+				if(this.isSitting()) {
+					// occasionally stand up
+					if(rand.nextInt(1200) == 0) {
+						this.setSitting(false);
+					}
+				} else if(getAttackTarget() == null && rand.nextInt(750) == 0) {
+					// occasionally sit down if no attack target
+					setSitting(true);
+				}
 			} else {
-				updateAnimations();
 				// spawn particles
 				if(this.isDespawning() && this.getDespawningTicks() > MAX_DESPAWNING_TICKS / 2) {
 					this.world.addParticle(ParticleTypes.HAPPY_VILLAGER, 
@@ -129,9 +145,26 @@ public class PhookaEntity extends MonsterEntity {
 			}
 		}		
 	}
+
+	@Override
+	public EntitySize getSize(final Pose poseIn) {
+		return isSitting() ? super.getSize(poseIn).scale(1.1F, 0.7F) : super.getSize(poseIn);
+	}
 	
-	private void updateAnimations() {
-		
+	@Override
+	public void damageEntity(final DamageSource source, final float amount) {
+		this.setSitting(false);
+		super.damageEntity(source, amount);
+	}
+	
+	@Override
+	public void onDeath(final DamageSource source) {
+		if(source.getTrueSource() instanceof PlayerEntity) {
+			final PlayerEntity p = (PlayerEntity)source.getTrueSource();
+			// apply a curse
+			final PhookaRiddle r = PhookaRiddles.getRandom(rand);
+			r.getCursing().accept(p);
+		}
 	}
 	
 	public boolean isSitting() {
@@ -141,6 +174,10 @@ public class PhookaEntity extends MonsterEntity {
 	public void setSitting(final boolean isSitting) {
 		if(isSitting != this.getDataManager().get(SITTING)) {
 			this.getDataManager().set(SITTING, isSitting);
+			if(isSitting) {
+				this.getNavigator().clearPath();
+				this.setAttackTarget(null);
+			}
 		}
 	}
 	
@@ -156,13 +193,10 @@ public class PhookaEntity extends MonsterEntity {
 	
 	@Override
 	public boolean processInteract(final PlayerEntity player, final Hand hand) {
-		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && player.getHeldItem(hand).isEmpty()) {
-			// DEBUG
-			//player.addPotionEffect(new EffectInstance(ModObjects.PHOOKA_CURSE_EGGS, PhookaEffect.Eggs.INTERVAL * 16 + 2));
-			this.setSitting(!this.isSitting());
+		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && this.isSitting() && player.getHeldItem(hand).isEmpty()) {
 			final PhookaRiddle riddle = getRiddleFor(player);
 			if(riddle != null) {
-			//	GuiLoader.loadPhookaGui(this, player, riddle);
+				GuiLoader.loadPhookaGui(this, player, riddle);
 			}
 			return true;
 		}
@@ -173,13 +207,14 @@ public class PhookaEntity extends MonsterEntity {
 	public void writeAdditional(CompoundNBT compound) {
 		super.writeAdditional(compound);
 		compound.putByte(KEY_DESPAWNING_TICKS, (byte)this.getDespawningTicks());
-
+		compound.putBoolean(KEY_SITTING, this.isSitting());
 	}
 
 	@Override
 	public void readAdditional(final CompoundNBT compound) {
 		super.readAdditional(compound);
 		this.setDespawningTicks(compound.getByte(KEY_DESPAWNING_TICKS));
+		this.setSitting(compound.getBoolean(KEY_SITTING));
 	}
 	
 	/**
@@ -217,6 +252,23 @@ public class PhookaEntity extends MonsterEntity {
 	public static boolean canSpawnHere(EntityType<PhookaEntity> entity, IWorld world, SpawnReason reason,
 			BlockPos pos, Random rand	) {
 		return true;
+	}
+	
+	/**
+	 * Adapted to only wander around while entity is fully standing up
+	 **/
+	class WanderAvoidWaterGoal extends WaterAvoidingRandomWalkingGoal {
+
+		private final PhookaEntity entity;
+		public WanderAvoidWaterGoal(final PhookaEntity creature, final double speedFactorIn) {
+			super(creature, speedFactorIn);
+			this.entity = creature;
+		}
+
+		@Override
+		public boolean shouldExecute() {
+			return !entity.isSitting() && super.shouldExecute();
+		}
 	}
 	
 	class SpoilBerriesGoal extends Goal {
