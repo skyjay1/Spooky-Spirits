@@ -12,7 +12,7 @@ public class RenderWillOWisp extends LivingRenderer<WillOWispEntity, ModelWillOW
 	private static final ResourceLocation TEXTURE = new ResourceLocation(SpookySpirits.MODID, "textures/entities/willowisp.png");
 
 	public RenderWillOWisp(EntityRendererManager manager) {
-		super(manager, new ModelWillOWisp(), 0.25F);
+		super(manager, new ModelWillOWisp(), 0.0F);
 	}
 
 	@Override

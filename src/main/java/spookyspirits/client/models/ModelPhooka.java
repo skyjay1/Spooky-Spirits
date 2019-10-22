@@ -228,7 +228,7 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 			sit();
 		} else {
 			// STANDING / WALKING
-			final float speed = 1.15F;
+			final float speed = 1.25F;
 			final float angle = 1.6F;
 			final float rad30 = (float)Math.toRadians(30D);
 			final float rad40 = (float)Math.toRadians(40D);

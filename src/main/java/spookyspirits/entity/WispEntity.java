@@ -19,6 +19,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.FlyingEntity;
 import net.minecraft.entity.ILivingEntityData;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.monster.SkeletonEntity;
 import net.minecraft.entity.passive.BatEntity;
@@ -57,7 +58,6 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		super(type, world);
 	}
 	
-
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
@@ -69,7 +69,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		super.livingTick();
 		// check for nearby players
 		if(this.ticksExisted % 2 == 0 && this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
-			final double range = 4.0D;
+			final double range = 2.5D;
 			final List<PlayerEntity> list = this.getEntityWorld().getEntitiesWithinAABB(PlayerEntity.class, 
 					this.getBoundingBox().grow(range, range / 2.0D, range));
 			if(!list.isEmpty()) {
@@ -120,7 +120,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 					int z = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * cosine);
 					int dy = 1 + rand.nextInt(3);
 					BlockPos p = WispEntity.getBestY(this.getEntityWorld(), myPos.add(x, y, z), dy);
-					// if the chosen position is actually air, place a Will O WispEntity
+					// if the chosen position is actually air, place a Will O Wisp Entity
 					if(this.getEntityWorld().isAirBlock(p)) {
 						final WillOWispEntity w = ModObjects.WILL_O_WISP.create(this.world, (CompoundNBT)null, (ITextComponent)null, (PlayerEntity)null, p, SpawnReason.MOB_SUMMONED, false, false);
 						w.setPosition(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D);
@@ -157,7 +157,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	
 	@Override
 	public int getLightLevel() {
-		return 11;
+		return 9;
 	}
 	
 	/** 
@@ -175,16 +175,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		}
 		return p;
 	}
-	
-//	
-//	public static void initWispActions() {
-//		StringBuilder sb = new StringBuilder();
-//		for(final WispAction a : WispAction.ACTIONS) {
-//			sb.append("{" + a.getName() + "} ");
-//		}
-//		SpookySpirits.LOGGER.info("Registered WispActions:\n" + sb.toString());
-//	}
-//	
+
 	public static ConfigValue<List<? extends String>> setupConfig(final SpiritsConfig config, final ForgeConfigSpec.Builder builder) {
 		builder.comment("Percent chance that the following WispEntity actions can occur (0=disabled)");
 		for(final WispAction a : WispAction.ACTIONS) {
@@ -227,7 +218,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 				BlockPos pos = wispEntity.getPosition();
 				for (final Direction d : Direction.values()) {
 					final BlockState state = wispEntity.getEntityWorld().getBlockState(pos);
-					if (state.isAir(wispEntity.getEntityWorld(), pos) || state.getMaterial().isReplaceable()) {
+					if (state.getBlock() == ModObjects.WISP_LIGHT || state.isAir(wispEntity.getEntityWorld(), pos) || state.getMaterial().isReplaceable()) {
 						break;
 					}
 					pos = wispEntity.getPosition().offset(d, 1 + wispEntity.rand.nextInt(2));
@@ -277,8 +268,8 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 						new ItemStack(Items.CHAINMAIL_BOOTS), wispEntity.rand.nextInt(2), true);
 				final ItemStack sword = EnchantmentHelper.addRandomEnchantment(wispEntity.rand,
 						new ItemStack(Items.IRON_SWORD), wispEntity.rand.nextInt(2), false);
-				sword.addEnchantment(Enchantments.SHARPNESS, 1 + wispEntity.rand.nextInt(3));
-				sword.addEnchantment(Enchantments.FIRE_ASPECT, 1 + wispEntity.rand.nextInt(2));
+				sword.addEnchantment(Enchantments.SHARPNESS, wispEntity.rand.nextInt(2));
+				sword.addEnchantment(Enchantments.FIRE_ASPECT, wispEntity.rand.nextInt(2));
 				sk.setItemStackToSlot(EquipmentSlotType.HEAD, helmet);
 				sk.setItemStackToSlot(EquipmentSlotType.CHEST, chest);
 				sk.setItemStackToSlot(EquipmentSlotType.LEGS, legs);
@@ -352,8 +343,12 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 
 			@Override
 			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
-				player.inventory.armorInventory.forEach(i -> player.dropItem(i, true, false));
-				player.inventory.armorInventory.clear();
+				for(final EquipmentSlotType s : EquipmentSlotType.values()) {
+					if(player.hasItemInSlot(s)) {
+						player.dropItem(player.getItemStackFromSlot(s), true, false);
+						player.setItemStackToSlot(s, ItemStack.EMPTY);
+					}
+				}
 				return true;
 			}
 
@@ -402,6 +397,20 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 				return true;
 			}
 
+		};
+		
+		protected static final WispAction LIGHTNING = new WispAction("lightning", 15) {
+			
+			@Override
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
+				final double x = (wispEntity.posX + player.posX) / 2.0D;
+				final double z = (wispEntity.posZ + player.posZ) / 2.0D;
+				double y = Math.ceil((wispEntity.posY + player.posY) / 2.0D);
+				y = WispEntity.getBestY(player.getEntityWorld(), new BlockPos(x, y, z), 1).getY();
+				final LightningBoltEntity e = new LightningBoltEntity(player.getEntityWorld(), x, y, z, false);
+				player.getEntityWorld().addEntity(e);
+				return true;
+			}
 		};
 
 		private final String name;

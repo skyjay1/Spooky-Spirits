@@ -313,6 +313,7 @@ public final class PhookaRiddles {
 					if(p.isServerWorld()) {
 						final SquidEntity squid = EntityType.SQUID.create(p.getEntityWorld());
 						squid.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(50D);
+						squid.setHealth(50F);
 						squid.setPosition(p.posX, p.posY, p.posZ);
 						p.getEntityWorld().addEntity(squid);
 						squid.startRiding(p, true);
