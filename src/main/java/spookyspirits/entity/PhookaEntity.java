@@ -33,19 +33,17 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import spookyspirits.gui.GuiLoader;
+import spookyspirits.client.gui.GuiLoader;
 import spookyspirits.init.ModObjects;
 import spookyspirits.util.PhookaRiddle;
 import spookyspirits.util.PhookaRiddles;
 
 /*
- * 
  * Desc: 
  * [ ] PhookaEntity would spawn in all forest type biomes using Forge's BiomeDict. 
  * [X] it could turn any berries laying on the ground or growing on a bush into spoiled berries. 
@@ -80,10 +78,11 @@ public class PhookaEntity extends MonsterEntity {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
 		this.goalSelector.addGoal(2, new MoveTowardsTargetGoal(this, 1.0D, 9.0F));
-		this.goalSelector.addGoal(3, new WanderAvoidWaterGoal(this, 0.7D));
-		this.goalSelector.addGoal(4, new LookAtGoal(this, PlayerEntity.class, 6.0F));
-		this.goalSelector.addGoal(5, new LookRandomlyGoal(this));
-		this.goalSelector.addGoal(6, new SpoilBerriesGoal(this, rand.nextInt(3) + 3));
+		this.goalSelector.addGoal(3, new SittingGoal(this, 1200, 750));
+		this.goalSelector.addGoal(4, new WanderAvoidWaterGoal(this, 0.7D));
+		this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 6.0F));
+		this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
+		this.goalSelector.addGoal(7, new SpoilBerriesGoal(this, rand.nextInt(3) + 3));
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 	}
 
@@ -106,39 +105,27 @@ public class PhookaEntity extends MonsterEntity {
 	@Override
 	public void livingTick() {
 		super.livingTick();
-		if(this.isAlive()) {
-			if(this.isServerWorld() && !this.world.isRemote) {
-				// if the entity is despawning, increment despawning ticks until it's gone
-				if(this.isDespawning()) {
-					this.setDespawningTicks(this.getDespawningTicks() + 1);
-					// if despawning ticks reaches max, despawn
-					if(this.getDespawningTicks() > MAX_DESPAWNING_TICKS) {
-						this.remove();
-					}
-				}
-				// update sitting
-				if(this.isSitting()) {
-					// occasionally stand up
-					if(rand.nextInt(1200) == 0) {
-						this.setSitting(false);
-					}
-				} else if(getAttackTarget() == null && rand.nextInt(750) == 0) {
-					// occasionally sit down if no attack target
-					setSitting(true);
-				}
-			} else {
-				// spawn particles
-				if(this.isDespawning() && this.getDespawningTicks() > MAX_DESPAWNING_TICKS / 2) {
-					this.world.addParticle(ParticleTypes.HAPPY_VILLAGER, 
-							this.posX + rand.nextDouble() * 0.5D - 0.25D, 
-							this.posY + 0.25D + rand.nextDouble() * 1.25D, 
-							this.posZ + rand.nextDouble() * 0.5D - 0.25D, 
-							rand.nextDouble() * 0.1D - 0.05D,
-							rand.nextDouble() * 0.35D,
-							rand.nextDouble() * 0.1D - 0.05D);
+		if(this.isServerWorld() && !this.world.isRemote) {
+			// if the entity is despawning, increment despawning ticks until it's gone
+			if(this.isDespawning()) {
+				this.setDespawningTicks(this.getDespawningTicks() + 1);
+				// if despawning ticks reaches max, despawn
+				if(this.getDespawningTicks() > MAX_DESPAWNING_TICKS) {
+					this.remove();
 				}
 			}
-		}		
+		} else {
+			// spawn particles
+			if(this.isDespawning() && this.getDespawningTicks() > MAX_DESPAWNING_TICKS / 2) {
+				this.world.addParticle(ParticleTypes.HAPPY_VILLAGER, 
+						this.posX + rand.nextDouble() * 0.5D - 0.25D, 
+						this.posY + 0.25D + rand.nextDouble() * 1.25D, 
+						this.posZ + rand.nextDouble() * 0.5D - 0.25D, 
+						rand.nextDouble() * 0.1D - 0.05D,
+						rand.nextDouble() * 0.35D,
+						rand.nextDouble() * 0.1D - 0.05D);
+			}
+		}
 	}
 
 	@Override
@@ -148,8 +135,15 @@ public class PhookaEntity extends MonsterEntity {
 	
 	@Override
 	public void damageEntity(final DamageSource source, final float amount) {
-		this.setSitting(false);
-		super.damageEntity(source, amount);
+		if(!this.isInvulnerableTo(source)) {
+			super.damageEntity(source, amount);
+			this.setSitting(false);
+		}
+	}
+	
+	@Override
+	public boolean isInvulnerableTo(final DamageSource src) {
+		return src == DamageSource.SWEET_BERRY_BUSH || super.isInvulnerableTo(src);
 	}
 	
 	@Override
@@ -278,7 +272,7 @@ public class PhookaEntity extends MonsterEntity {
 
 		@Override
 		public boolean shouldExecute() {
-			return entity.getEntityWorld().getRandom().nextInt(10) == 0;
+			return entity.getEntityWorld().getRandom().nextInt(30) == 0;
 		}
 		
 		@Override
@@ -313,6 +307,39 @@ public class PhookaEntity extends MonsterEntity {
 			for(final ItemEntity i : list) {
 				final int size = i.getItem().getCount();
 				i.setItem(new ItemStack(ModObjects.SPOILED_BERRIES, size));
+			}
+		}
+	}
+	
+	class SittingGoal extends Goal {
+		
+		private final PhookaEntity entity;
+		private final int sittingTime;
+		private final int walkingTime;
+		private int timeUntilChange;
+		
+		public SittingGoal(final PhookaEntity creature, final int timeSitting, final int timeWalking) {
+			this.entity = creature;
+			timeUntilChange = Math.max(timeSitting, timeWalking);
+			sittingTime = timeSitting;
+			walkingTime = timeWalking;
+		}
+		
+		@Override
+		public boolean shouldExecute() {
+			return timeUntilChange-- < 0;
+		}
+		
+		@Override
+		public void startExecuting() {
+			if(entity.isSitting()) {
+				// if entity is sitting down, stand up instead
+				timeUntilChange = walkingTime + entity.getRNG().nextInt(walkingTime);
+				entity.setSitting(false);
+			} else if(entity.getAttackTarget() == null) {
+				// if entity is not attacking anything, sit down
+				timeUntilChange = sittingTime + entity.getRNG().nextInt(sittingTime);
+				entity.setSitting(true);
 			}
 		}
 	}

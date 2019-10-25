@@ -1,4 +1,4 @@
-package spookyspirits.gui;
+package spookyspirits.client.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 
@@ -25,20 +25,20 @@ import spookyspirits.util.PhookaRiddle;
 public class PhookaGui extends Screen {
 	
 	///////////// PHOOKA GUI /////////////
-	// [ ] 3 screens
-	//// [ ] both screens show:
+	// [X] 3 screens
+	//// [X] both screens show:
 	////// [X] background
 	////// [X] text display
-	////// [ ] phooka face icon
+	////// [X] phooka face icon
 	//// [X] first screen offers to challenge riddle
 	////// [X] buttons for yes and no, ESC exits GUI
 	//// [X] second screen shows riddle and multiple choice answers
-	//// [ ] third screen shows the result
+	//// [X] third screen shows the result
 	////// [X] hides answers
-	////// [ ] either a happy or angry phooka icon
-	////// [ ] triggers a noise and the phooka's despawning
-	////// [ ] gives player either good effect or bad effect through packets
-	////// [ ] automatically closes gui after a few seconds
+	////// [X] either a happy or angry phooka icon
+	////// [X] triggers a noise and the phooka's despawning
+	////// [X] gives player either good effect or bad effect through packets
+	////// [X] automatically closes gui after a few seconds
 	
 	protected static final ResourceLocation TEXTURE = new ResourceLocation(SpookySpirits.MODID, "textures/gui/phooka_riddle.png");
 

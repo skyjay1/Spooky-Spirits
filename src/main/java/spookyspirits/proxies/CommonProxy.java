@@ -77,7 +77,7 @@ public class CommonProxy {
 		
 		event.getRegistry().register(
 				EntityType.Builder.create(WispEntity::new, EntityClassification.MONSTER)
-					.size(0.8F, 2.2F)
+					.size(0.8F, 1.4F)
 					.build("wisp").setRegistryName(SpookySpirits.MODID, "wisp")
 		);
 		

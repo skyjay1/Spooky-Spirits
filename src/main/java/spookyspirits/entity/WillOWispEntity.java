@@ -33,7 +33,10 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 
 	protected static final DataParameter<Optional<UUID>> WISP_UUID = EntityDataManager
 			.createKey(WillOWispEntity.class, DataSerializers.OPTIONAL_UNIQUE_ID);
+	protected static final DataParameter<Byte> VARIANT = EntityDataManager.createKey(WillOWispEntity.class, DataSerializers.BYTE);
+	
 	private static final String KEY_WISP = "WispUUID";
+	private static final String KEY_VARIANT = "Variant";
 	
 	public WillOWispEntity(EntityType<? extends FlyingEntity> type, World world) {
 		super(type, world);
@@ -44,6 +47,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 	protected void registerData() {
 		super.registerData();
 		this.getDataManager().register(WISP_UUID, Optional.empty());
+		this.getDataManager().register(VARIANT, (byte)0);
 	}
 	
 	@Override
@@ -135,6 +139,16 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 				: null;
 	}
 	
+	public void setVariant(final byte i) {
+		if(getVariant() != i) {
+			this.getDataManager().set(VARIANT, i);
+		}
+	}
+	
+	public byte getVariant() {
+		return this.getDataManager().get(VARIANT).byteValue();
+	}
+	
 	@Override
 	public void writeAdditional(CompoundNBT compound) {
 		super.writeAdditional(compound);
@@ -142,7 +156,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		if(uuid != null) {
 			compound.putUniqueId(KEY_WISP, uuid);
 		}
-
+		compound.putByte(KEY_VARIANT, getVariant());
 	}
 
 	@Override
@@ -151,6 +165,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		if(compound.hasUniqueId(KEY_WISP)) {
 			this.setWisp(compound.getUniqueId(KEY_WISP));
 		}
+		this.setVariant(compound.getByte(KEY_VARIANT));
 	}
 	
 	@Override

@@ -28,6 +28,9 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
@@ -36,6 +39,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IWorld;
@@ -44,8 +48,6 @@ import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
-import net.minecraftforge.registries.ForgeRegistries;
 import spookyspirits.effect.PhookaEffect;
 import spookyspirits.entity.goal.PlaceLightGoal;
 import spookyspirits.init.ModObjects;
@@ -54,8 +56,37 @@ import spookyspirits.init.SpookySpirits;
 
 public class WispEntity extends FlyingEntity implements ILightEntity {
 	
+	// there are 3 variants: blue, green, yellow
+	protected static final DataParameter<Byte> VARIANT = EntityDataManager.createKey(WispEntity.class, DataSerializers.BYTE);
+	private static final String KEY_VARIANT = "Variant";
+	
+	public static final int NUM_PARTS = 8;
+	public final Vec3d[] partRotations;
+	public final Vec3d[] partMotions;
+
 	public WispEntity(EntityType<? extends WispEntity> type, World world) {
 		super(type, world);
+		// initialize part rotation arrays
+		partRotations = new Vec3d[NUM_PARTS];
+		partMotions = new Vec3d[NUM_PARTS];
+		for(int i = 0; i < NUM_PARTS; i++) {
+			// current rotations
+			float x = rand.nextFloat() * 2F * (float)Math.PI;
+			float y = rand.nextFloat() * 2F * (float)Math.PI;
+			float z = rand.nextFloat() * 2F * (float)Math.PI;
+			partRotations[i] = new Vec3d(x, y, z);
+			// motion
+			float dx = rand.nextFloat() * 0.07F;
+			float dy = rand.nextFloat() * 0.07F;
+			float dz = rand.nextFloat() * 0.07F;
+			partMotions[i] = new Vec3d(dx, dy, dz);
+		}
+	}
+	
+	@Override
+	protected void registerData() {
+		super.registerData();
+		this.getDataManager().register(VARIANT, (byte)0);
 	}
 	
 	@Override
@@ -71,9 +102,9 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		if(this.ticksExisted % 2 == 0 && this.isAlive() && this.isServerWorld() && !this.world.isRemote) {
 			final double range = 2.5D;
 			final List<PlayerEntity> list = this.getEntityWorld().getEntitiesWithinAABB(PlayerEntity.class, 
-					this.getBoundingBox().grow(range, range / 2.0D, range));
+					this.getBoundingBox().grow(range, range / 2.0D, range), p -> !p.isCreative());
 			if(!list.isEmpty()) {
-				// find the nearest player
+				// find the nearest non-creative player
 				double closestSq = range * range;
 				PlayerEntity closest = null;
 				for(final PlayerEntity p : list) {
@@ -95,6 +126,38 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 				}
 			}
 		}
+		// client-side updates
+		if(this.world.isRemote) {
+			for(int i = 0; i < NUM_PARTS; i++) {
+				partRotations[i] = partRotations[i].add(partMotions[i]);
+			}
+		}
+	}
+	
+	public void setVariant(final byte i) {
+		if(getVariant() != i) {
+			this.getDataManager().set(VARIANT, i);
+		}
+	}
+	
+	public byte getVariant() {
+		return this.getDataManager().get(VARIANT).byteValue();
+	}
+	
+	public void addPartRotations(final int index, final double dx, final double dy, final double dz) {
+		this.partRotations[index] = partRotations[index].add(dx, dy, dz);
+	}
+	
+	@Override
+	public void writeAdditional(CompoundNBT compound) {
+		super.writeAdditional(compound);
+		compound.putByte(KEY_VARIANT, getVariant());
+	}
+
+	@Override
+	public void readAdditional(final CompoundNBT compound) {
+		super.readAdditional(compound);
+		this.setVariant(compound.getByte(KEY_VARIANT));
 	}
 	
 	@Override
@@ -102,6 +165,9 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	public ILivingEntityData onInitialSpawn(IWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason,
 			@Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag) {
 		spawnDataIn = super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+		// determine spawn variant
+		final byte variant = (byte)rand.nextInt(3);
+		this.setVariant(variant);
 		// spawn WillOWisps nearby
 		if(this.isServerWorld() /*// TODO re-enable after testing: && reason == SpawnReason.NATURAL */) {
 			final BlockPos myPos = this.getPosition();
@@ -123,8 +189,9 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 					// if the chosen position is actually air, place a Will O Wisp Entity
 					if(this.getEntityWorld().isAirBlock(p)) {
 						final WillOWispEntity w = ModObjects.WILL_O_WISP.create(this.world, (CompoundNBT)null, (ITextComponent)null, (PlayerEntity)null, p, SpawnReason.MOB_SUMMONED, false, false);
-						w.setPosition(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D);
+						w.setLocationAndAngles(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D, rand.nextInt(4) * 90F, 0);
 						w.setWisp(this.getUniqueID());
+						w.setVariant(variant);
 						worldIn.addEntity(w);
 						break;
 					}
@@ -176,24 +243,23 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		return p;
 	}
 
-	public static ConfigValue<List<? extends String>> setupConfig(final SpiritsConfig config, final ForgeConfigSpec.Builder builder) {
+	/**
+	 * Fills the config with information we need
+	 * @param config the config instance
+	 * @param builder the config builder instance
+	 * @return the potion effect blacklist to be stored in the config
+	 **/
+	public static void setupConfig(final SpiritsConfig config, final ForgeConfigSpec.Builder builder) {
 		builder.comment("Percent chance that the following WispEntity actions can occur (0=disabled)");
 		for(final WispAction a : WispAction.ACTIONS) {
 			config.registerWispAction(builder, a.getName(), a.getDefaultChance());
 		}
-		final ConfigValue<List<? extends String>> blacklist =
-				builder.comment("Potion effects that the WispEntity should not apply")
-					.defineList("potion_blacklist", 
-						Lists.newArrayList(
-								Effects.WITHER.getRegistryName().toString(), Effects.LEVITATION.getRegistryName().toString(),
-								Effects.HERO_OF_THE_VILLAGE.getRegistryName().toString(), PhookaEffect.Invisibility.REGISTRY_NAME.toString(),
-								PhookaEffect.Footsteps.REGISTRY_NAME.toString(), PhookaEffect.Sponge.REGISTRY_NAME.toString(),
-								PhookaEffect.Eggs.REGISTRY_NAME.toString()
-								),
-						o -> o instanceof String && 
-						ForgeRegistries.POTIONS.containsKey(new ResourceLocation((String)o)));
-		
-		return blacklist;
+		config.setPotionBlacklist(Lists.newArrayList(
+			Effects.WITHER.getRegistryName().toString(), Effects.LEVITATION.getRegistryName().toString(),
+			Effects.HERO_OF_THE_VILLAGE.getRegistryName().toString(),
+			PhookaEffect.Footsteps.REGISTRY_NAME.toString(), PhookaEffect.Sponge.REGISTRY_NAME.toString(),
+			PhookaEffect.Eggs.REGISTRY_NAME.toString()
+		));
 	}
 
 	private abstract static class WispAction implements IStringSerializable {
@@ -269,7 +335,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 				final ItemStack sword = EnchantmentHelper.addRandomEnchantment(wispEntity.rand,
 						new ItemStack(Items.IRON_SWORD), wispEntity.rand.nextInt(2), false);
 				sword.addEnchantment(Enchantments.SHARPNESS, wispEntity.rand.nextInt(2));
-				sword.addEnchantment(Enchantments.FIRE_ASPECT, wispEntity.rand.nextInt(2));
+				sword.addEnchantment(Enchantments.FIRE_ASPECT, 0);
 				sk.setItemStackToSlot(EquipmentSlotType.HEAD, helmet);
 				sk.setItemStackToSlot(EquipmentSlotType.CHEST, chest);
 				sk.setItemStackToSlot(EquipmentSlotType.LEGS, legs);
@@ -286,7 +352,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		};
 
 		//////////// SPAWN A SWARM OF BATS
-		protected static final WispAction SPAWN_BATS = new WispAction("bats", 30) {
+		protected static final WispAction SPAWN_BATS = new WispAction("bats", 40) {
 
 			@Override
 			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
@@ -306,7 +372,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		};
 
 		//////////// GIVE PLAYER GOOD POTION EFFECTS
-		protected static final WispAction POTION_EFFECT_GOOD = new WispAction("beneficial_effects", 20) {
+		protected static final WispAction POTION_EFFECT_GOOD = new WispAction("beneficial_effects", 30) {
 
 			@Override
 			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
@@ -338,8 +404,8 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 			}
 
 		};
-		//////////// MAKES PLAYER'S ITEMS SPILL ALL OVER
-		protected static final WispAction THROW_ITEMS = new WispAction("drop_inv", 10) {
+		//////////// MAKES PLAYER'S ARMOR ITEMS SPILL ALL OVER
+		protected static final WispAction THROW_ARMOR = new WispAction("drop_armor", 15) {
 
 			@Override
 			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
@@ -352,6 +418,16 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 				return true;
 			}
 
+		};
+		//////////// MAKES PLAYER'S ITEMS SPILL ALL OVER
+		protected static final WispAction THROW_ITEMS = new WispAction("drop_inv", 10) {
+	
+			@Override
+			protected boolean doAction(final WispEntity wispEntity, final PlayerEntity player) {
+				player.inventory.dropAllItems();
+				return true;
+			}
+	
 		};
 		//////////// RANDOMLY ENCHANTS PLAYER'S ARMOR AND HELD ITEM(S), IF APPLICABLE
 		protected static final WispAction ENCHANT_ITEMS = new WispAction("enchant_equipment", 10) {
@@ -381,7 +457,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 			}
 
 		};
-
+		//////////// REPLACES PLAYER HELMET WITH PUMPKIN HEAD
 		protected static final WispAction PUMPKIN_HEAD = new WispAction("pumpkin_head", 20) {
 
 			@Override
@@ -399,6 +475,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 
 		};
 		
+		//////////// SPAWNS A BOLT OF LIGHTNING NEARBY
 		protected static final WispAction LIGHTNING = new WispAction("lightning", 15) {
 			
 			@Override
@@ -467,5 +544,4 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 			return ACTIONS.isEmpty() ? NOTHING : ACTIONS.get(rand.nextInt(ACTIONS.size()));
 		}
 	}
-
 }
