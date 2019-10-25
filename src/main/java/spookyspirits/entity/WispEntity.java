@@ -157,7 +157,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	
 	@Override
 	public int getLightLevel() {
-		return 9;
+		return 7;
 	}
 	
 	/** 

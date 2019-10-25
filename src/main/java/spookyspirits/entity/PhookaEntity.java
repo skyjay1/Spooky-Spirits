@@ -108,11 +108,6 @@ public class PhookaEntity extends MonsterEntity {
 		super.livingTick();
 		if(this.isAlive()) {
 			if(this.isServerWorld() && !this.world.isRemote) {
-				// partway through despawning, play sound
-				if(this.getDespawningTicks() == MAX_DESPAWNING_TICKS / 2) {
-					this.playSound(SoundEvents.ENTITY_WITCH_CELEBRATE, 
-							0.8F + 0.2F * rand.nextFloat(), 0.9F + 0.2F * rand.nextFloat());
-				}
 				// if the entity is despawning, increment despawning ticks until it's gone
 				if(this.isDespawning()) {
 					this.setDespawningTicks(this.getDespawningTicks() + 1);

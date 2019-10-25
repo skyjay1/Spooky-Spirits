@@ -50,7 +50,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 	protected void registerGoals() {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new PlaceLightGoal(this, getLightLevel()));
-		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 5.5D, 1.0D));
+		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 3.8D, 1.0D));
 	}
 
 	@Override
@@ -155,7 +155,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 	
 	@Override
 	public int getLightLevel() {
-		return 6;
+		return 5;
 	}
 
 	static class MoveHelperController extends MovementController {
@@ -236,23 +236,21 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 			final BlockPos wispPos = wispEntity.getPosition();
 			//final Vec3d currentPos = wispEntity.getPositionVec().add(0, 0.5D, 0);
 			final BlockPos origin = willowisp.getPosition();
-			final double curDisSq = wispPos.distanceSq(origin);
-			final int radius = Math.max(2, (int)Math.ceil(range * 1.5D));
-			final int radDiv2 = radius / 2;
+			// get current distance (squared) with some inaccuracy
+			final double inaccuracy = Math.pow(1.8D, 2);
+			final double curDisSq = wispPos.distanceSq(origin) + 
+					(willowisp.getRNG().nextDouble() * inaccuracy - (inaccuracy / 2));
+			final double radius = range * 1.5D;
 			// attempt to find a blockpos that is AIR and CLOSER (to the wisp)
 			BlockPos pos;
-			//Vec3d target;
 			for(int i = 0, attempts = 20; i < attempts; i++) {
-				int x = willowisp.rand.nextInt(radius) - radDiv2;
-				int y = willowisp.rand.nextInt(radDiv2);
-				int z = willowisp.rand.nextInt(radius) - radDiv2;
+				double x = willowisp.rand.nextDouble() * radius - radius * 0.5D;
+				double y = willowisp.rand.nextDouble() * radius * 0.5D - radius * 0.25D;
+				double z = willowisp.rand.nextDouble() * radius - radius * 0.5D;
 				int dy = 1 + willowisp.rand.nextInt(3);
 				pos = WispEntity.getBestY(willowisp.getEntityWorld(), origin.add(x, y, z), dy);
-				//target = new Vec3d(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
-				//RayTraceResult.Type result = willowisp.getEntityWorld().rayTraceBlocks(new RayTraceContext(currentPos, target,
-				//		RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, willowisp)).getType();
 				if(wispPos.distanceSq(pos) < curDisSq && willowisp.getEntityWorld().isAirBlock(pos)) {
-					// attempt to move
+					// if air block, set as move target
 					willowisp.getMoveHelper().setMoveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, speedFactor);
 					return;
 				}

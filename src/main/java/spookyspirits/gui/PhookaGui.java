@@ -8,6 +8,8 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -49,13 +51,6 @@ public class PhookaGui extends Screen {
 	
 	// icons are this many pixels apart in the texture
 	protected static final int SEP = 5;
-	
-	protected static final int FACE_TEXTURE_X = 0;
-	protected static final int FACE_TEXTURE_Y = BG_TEXTURE_Y + BG_HEIGHT + SEP;
-	protected static final int FACE_WIDTH = 51;
-	protected static final int FACE_HEIGHT = 47;
-	protected static final int FACE_START_X = 28;
-	protected static final int FACE_START_Y = 28;
 
 	protected static final int TEXT_WIDTH = 70;
 	protected static final int TEXT_HEIGHT = 85;
@@ -69,19 +64,30 @@ public class PhookaGui extends Screen {
 	protected static final int OPTIONS_START_X = 34;
 	protected static final int OPTIONS_START_Y = 132;
 	
+	// how wide the text box is for the options
 	protected static final int OPTIONS_TEXT_WIDTH = 50;
+
+	protected static final int FACE_WIDTH = 26;
+	protected static final int FACE_HEIGHT = 30;
+	protected static final int FACE_TEXTURE_X = 0;
+	protected static final int FACE_TEXTURE_Y = OPTIONS_TEXTURE_Y + OPTIONS_HEIGHT + SEP;
+	// FACE_START_X=28, FACE_START_Y=28, FACE_BG_WIDTH=51, FACE_BG_HEIGHT=47
+	protected static final int FACE_START_X = 28 + (51 - FACE_WIDTH) / 2;
+	protected static final int FACE_START_Y = 28 + (47 - FACE_HEIGHT) / 2;
 	
 	private Button buttonYes;
 	private Button buttonNo;
 	private Button[] optionButtons;
 	
 	// page 0 is "accept / decline riddle"
-	// page 1 is "show riddle and text entry box"
-	// page 2 is "hide text entry box and show happy / angry icon, then close gui after a few seconds"
+	// page 1 is "show riddle and multiple choice options"
+	// page 2 is "hide options and show happy / angry icon, then close gui after a few seconds"
 	private int page = 0;
 		
 	private boolean isClosing = false;
 	private long ticksUntilClose = 30;
+	// iconNum: 0=neutral, 1=happy, 2=angry
+	private int iconNum = 0;
 	
 	private final PhookaEntity phooka;
 	private final PlayerEntity player;
@@ -105,7 +111,7 @@ public class PhookaGui extends Screen {
 		int x = BG_START_X + BG_WIDTH - w;
 		int y = BG_HEIGHT + BG_START_Y + 8;
 		this.buttonNo = this.addButton(new Button(x, y, w, h, I18n.format("gui.no"), 
-				c -> /* TODO */onClose()));
+				c -> onClose()));
 		x = BG_START_X + BG_WIDTH - (w * 2) - 8;
 		this.buttonYes = this.addButton(new Button(x, y, w, h, I18n.format("gui.yes"), 
 				c -> setPage(1)));
@@ -132,22 +138,21 @@ public class PhookaGui extends Screen {
 		// draw background
 		this.getMinecraft().getTextureManager().bindTexture(TEXTURE);
 		updateBGPos();
-		this.blitOffset = 0;
+		//this.blitOffset = 0;
 		int x = BG_START_X;
 		int y = BG_START_Y;
 		this.blit(x, y, BG_TEXTURE_X, BG_TEXTURE_Y, BG_WIDTH, BG_HEIGHT);
 		
-		// draw face background icon
+		// draw face icon
 		x = BG_START_X + FACE_START_X;
 		y = BG_START_Y + FACE_START_Y;
 		this.getMinecraft().getTextureManager().bindTexture(TEXTURE);
-		//this.blit(x, y, FACE_TEXTURE_X, FACE_TEXTURE_Y, FACE_WIDTH, FACE_HEIGHT);
-			// TODO draw face
+		this.blit(x, y, FACE_TEXTURE_X + (FACE_WIDTH + SEP) * iconNum, FACE_TEXTURE_Y, FACE_WIDTH, FACE_HEIGHT);
 		
 		// draw Phooka name under icon
 		final String phookaName = new TranslationTextComponent("entity.spookyspirits.phooka").applyTextStyle(TextFormatting.ITALIC).getFormattedText();
 		this.font.drawString(phookaName, BG_START_X + FACE_START_X + (FACE_WIDTH - this.font.getStringWidth(phookaName)) / 2, 
-				BG_START_Y + FACE_START_Y + FACE_HEIGHT + 2, 0);
+				BG_START_Y + FACE_START_Y + FACE_HEIGHT + 12, 0);
 		
 		// draw page-specific details
 		if(this.page == 0) {
@@ -225,7 +230,7 @@ public class PhookaGui extends Screen {
 		buttonYes.visible = this.page == 0;
 		buttonNo.visible = this.page == 0;
 		for(final Button b : this.optionButtons) {
-			b.visible = this.page == 1 && !this.isClosing;
+			b.visible = this.page == 1;
 		}
 	}
 	
@@ -237,6 +242,18 @@ public class PhookaGui extends Screen {
 	public void submitAnswer(final int id) {
 		this.isClosing = true;
 		this.answer = id;
+		// only use client-side riddle for visual cue, use server + packet for logic
+		final SoundEvent sound;
+		if(id == riddle.getCorrectAnswer()) {
+			iconNum = 1;
+			sound = SoundEvents.ENTITY_VILLAGER_CELEBRATE;
+		} else {
+			iconNum = 2;
+			sound = SoundEvents.ENTITY_WITCH_CELEBRATE;
+		}
+		phooka.playSound(sound, 
+				0.8F + 0.2F * phooka.getRNG().nextFloat(), 
+				0.9F + 0.2F * phooka.getRNG().nextFloat());
 		setPage(2);
 	}
 	
