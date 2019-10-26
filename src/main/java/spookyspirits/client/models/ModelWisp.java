@@ -97,7 +97,7 @@ public class ModelWisp extends EntityModel<WispEntity>{
 		}
 		
 		public void update(final WispEntity entity) {
-			if(entity.partRotations != null && entity.partMotions != null) {
+			if(entity.partRotations != null && entity.partMotions != null && i < entity.partMotions.length) {
 				model.rotateAngleX = (float)entity.partRotations[i].getX();
 				model.rotateAngleY = (float)entity.partRotations[i].getY();
 				model.rotateAngleZ = (float)entity.partRotations[i].getZ();

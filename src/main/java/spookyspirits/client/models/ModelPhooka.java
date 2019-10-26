@@ -126,6 +126,8 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 		rotate(snout1, 0.4363F, 0.0F, 0.0F);
 		head.addChild(snout1);
 		snout1.cubeList.add(new ModelBox(snout1, 42, 14, -2.0F, 0.25F, -4.0F, 4, 2, 4, 0.0F, false));
+		// TODO should we use this part?
+		snout1.isHidden = true;
 
 		ear1 = new RendererModel(this);
 		ear1.setRotationPoint(-3.0F, -3.5F, -1.0F);
@@ -196,11 +198,11 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 		}
 		
 		// enable transparency
-		final float fade = MathHelper.clamp(entity.getFadeFactor(), 0.0F, 0.6F);
+		final float fade = MathHelper.clamp(entity.getFadeFactor(), 0.0F, 1.0F);
 		GlStateManager.enableBlend();
 		GlStateManager.enableNormalize();
 		GlStateManager.blendFunc(770, 771);
-		GlStateManager.color4f(0.0F, 0.0F, 0.0F, fade);
+		GlStateManager.color4f(1.0F, 1.0F, 1.0F, fade);
 		
 		// actually render the parts
 		body.render(scale);
@@ -242,8 +244,8 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 			foot1.rotateAngleX = rad30 * 3.0F - hip1.rotateAngleX;
 			foot2.rotateAngleX = rad30 * 3.0F - hip2.rotateAngleX;
 			// arms
-			arm1.rotateAngleX = limbAngle2 * 0.65F;
-			arm2.rotateAngleX = limbAngle1 * 0.65F;
+			arm1.rotateAngleX = limbAngle2 * 0.35F;
+			arm2.rotateAngleX = limbAngle1 * 0.35F;
 			// hips and legs (constants used when standing)
 			//if(Math.abs(hip1.rotateAngleY) > 0.001F) {
 				stand();
