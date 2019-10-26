@@ -19,6 +19,8 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import spookyspirits.proxies.ClientProxy;
@@ -61,6 +63,12 @@ public class SpookySpirits {
 	}	
 	
 	@SubscribeEvent
+	public static void onServerStarting(final FMLServerStartingEvent event) {
+		LOGGER.info(MODID + ": RegisterSpawns");
+		PROXY.registerEntitySpawns();
+	}
+	
+	@SubscribeEvent
 	public static void registerBlocks(final RegistryEvent.Register<Block> event) {
 		LOGGER.debug(MODID + ": RegisterBlocks");
 		PROXY.registerBlocks(event);
@@ -96,6 +104,5 @@ public class SpookySpirits {
 		LOGGER.debug(MODID + ": RegisterEffects");
 		PROXY.registerEffects(event);
 		PhookaRiddles.init();
-		PhookaRiddles.dump();
 	}
 }

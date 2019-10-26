@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import com.google.common.collect.Lists;
 
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SharedMonsterAttributes;
@@ -224,6 +225,7 @@ public final class PhookaRiddles {
 						sk.setPosition(p.posX, p.posY, p.posZ);
 						sk.setAttackTarget(p);
 						sk.setItemStackToSlot(EquipmentSlotType.HEAD, new ItemStack(Items.CHAINMAIL_HELMET));
+						sk.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.IRON_SWORD));
 						p.getEntityWorld().addEntity(sk);
 					}
 				}).build());
@@ -256,7 +258,7 @@ public final class PhookaRiddles {
 				.setOptions("biome.minecraft.river", "biome.minecraft.ocean", "block.minecraft.player_head")
 				.setType(PhookaRiddle.Type.MEDIUM)
 				.setBlessing(new PhookaGiveEffect(Effects.NIGHT_VISION, 20000, 0))
-				.setCurse(new PhookaGiveEffect(Effects.BLINDNESS, 1000, 0)).build());
+				.setCurse(new PhookaGiveEffect(Effects.BLINDNESS, 6000, 0)).build());
 		
 		register(PhookaRiddle.Builder.create("horse").setAnswer("entity.minecraft.horse")
 				.setOptions("entity.minecraft.boat", "entity.minecraft.rabbit", "entity.minecraft.pig")
@@ -286,6 +288,8 @@ public final class PhookaRiddles {
 						sk.setPosition(p.posX, p.posY, p.posZ);
 						sk.setAttackTarget(p);
 						sk.setItemStackToSlot(EquipmentSlotType.HEAD, new ItemStack(Items.CHAINMAIL_HELMET));
+						sk.setItemStackToSlot(EquipmentSlotType.MAINHAND, 
+								EnchantmentHelper.addRandomEnchantment(p.getRNG(),new ItemStack(Items.BOW), 3, true));
 						sk.startRiding(horse, true);
 						p.getEntityWorld().addEntity(sk);
 					} 
@@ -333,12 +337,6 @@ public final class PhookaRiddles {
 				}).build());
 	}
 	
-	public static void dump() {
-		for(final PhookaRiddle r : REGISTRY.values()) {
-			SpookySpirits.LOGGER.info(r.toString());
-		}
-	}
-	
 	private static ItemStack enchant(final ItemStack i, final Enchantment e, final int l) {
 		i.addEnchantment(e, l);
 		return i;
@@ -362,7 +360,6 @@ public final class PhookaRiddles {
 		
 		@Override
 		public void accept(final PlayerEntity t) {
-			// TODO decide whether to show particles (change last arg to 'true')
 			if(t.isServerWorld() && !t.getEntityWorld().isRemote) {
 				final Effect effect = ForgeRegistries.POTIONS.getValue(effectName);
 				t.addPotionEffect(new EffectInstance(effect, duration, amplifier, false, !(effect instanceof PhookaEffect)));
@@ -441,7 +438,7 @@ public final class PhookaRiddles {
 		private final Biome.Category type;
 
 		public PhookaTeleportToBiome(Biome.Category biomeType) {
-			super(1, 10);
+			super(1, 20);
 			type = biomeType;
 		}
 		
@@ -458,7 +455,7 @@ public final class PhookaRiddles {
 					int z = (int)(radius * Math.cos(t));
 					BlockPos pos = origin.add(x, 0, z);
 					// check if this location is the correct biome
-					if(p.getEntityWorld().getBiome(pos).getCategory() == this.type) {
+					if(p.getEntityWorld().chunkExists(x >> 4, z >> 4) && p.getEntityWorld().getBiome(pos).getCategory() == this.type) {
 						// we found the biome! teleport the player to a safe location there
 						if(this.attemptTeleportAround(p, pos)) {
 							return;

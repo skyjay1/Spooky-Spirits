@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.annotation.Nullable;
+import javax.vecmath.Vector3f;
 
 import com.google.common.collect.Lists;
 
@@ -18,6 +19,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.FlyingEntity;
 import net.minecraft.entity.ILivingEntityData;
+import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.item.ItemEntity;
@@ -39,7 +41,6 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IWorld;
@@ -60,26 +61,27 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	protected static final DataParameter<Byte> VARIANT = EntityDataManager.createKey(WispEntity.class, DataSerializers.BYTE);
 	private static final String KEY_VARIANT = "Variant";
 	
-	public static final int NUM_PARTS = 8;
-	public final Vec3d[] partRotations;
-	public final Vec3d[] partMotions;
+	// these control the model rotations and boxes
+	public static final int NUM_PARTS = 9;
+	public final Vector3f[] partRotations;
+	public final Vector3f[] partMotions;
 
 	public WispEntity(EntityType<? extends WispEntity> type, World world) {
 		super(type, world);
 		// initialize part rotation arrays
-		partRotations = new Vec3d[NUM_PARTS];
-		partMotions = new Vec3d[NUM_PARTS];
+		partRotations = new Vector3f[NUM_PARTS];
+		partMotions = new Vector3f[NUM_PARTS];
 		for(int i = 0; i < NUM_PARTS; i++) {
-			// current rotations
+			// current rotations (these will change each tick)
 			float x = rand.nextFloat() * 2F * (float)Math.PI;
 			float y = rand.nextFloat() * 2F * (float)Math.PI;
 			float z = rand.nextFloat() * 2F * (float)Math.PI;
-			partRotations[i] = new Vec3d(x, y, z);
-			// motion
+			partRotations[i] = new Vector3f(x, y, z);
+			// motion (these will not change)
 			float dx = rand.nextFloat() * 0.07F;
 			float dy = rand.nextFloat() * 0.07F;
 			float dz = rand.nextFloat() * 0.07F;
-			partMotions[i] = new Vec3d(dx, dy, dz);
+			partMotions[i] = new Vector3f(dx, dy, dz);
 		}
 	}
 	
@@ -93,6 +95,13 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	protected void registerGoals() {
 		super.registerGoals();
 		this.goalSelector.addGoal(5, new PlaceLightGoal(this, getLightLevel()));
+	}
+	
+	@Override
+	protected void registerAttributes() {
+		super.registerAttributes();
+		this.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0D);
+		this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.19D);
 	}
 	
 	@Override
@@ -129,7 +138,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		// client-side updates
 		if(this.world.isRemote) {
 			for(int i = 0; i < NUM_PARTS; i++) {
-				partRotations[i] = partRotations[i].add(partMotions[i]);
+				partRotations[i].add(partMotions[i]);
 			}
 		}
 	}
@@ -142,10 +151,6 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	
 	public byte getVariant() {
 		return this.getDataManager().get(VARIANT).byteValue();
-	}
-	
-	public void addPartRotations(final int index, final double dx, final double dy, final double dz) {
-		this.partRotations[index] = partRotations[index].add(dx, dy, dz);
 	}
 	
 	@Override
@@ -227,6 +232,13 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		return 7;
 	}
 	
+	public static boolean canSpawnHere(final EntityType<WispEntity> entity, final IWorld world, final SpawnReason reason,
+			final BlockPos pos, final Random rand) {
+		System.out.println("checking canSpawnHere for wisp! Possible spawn at " + pos);
+		 // TODO
+		return world.canBlockSeeSky(pos) && world.getBrightness(pos) < 8;
+	}
+	
 	/** 
 	 * Tries to find the lowest y-value that is still air 
 	 * @param p origin (does not affect x and z)
@@ -250,7 +262,6 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	 * @return the potion effect blacklist to be stored in the config
 	 **/
 	public static void setupConfig(final SpiritsConfig config, final ForgeConfigSpec.Builder builder) {
-		builder.comment("Percent chance that the following WispEntity actions can occur (0=disabled)");
 		for(final WispAction a : WispAction.ACTIONS) {
 			config.registerWispAction(builder, a.getName(), a.getDefaultChance());
 		}

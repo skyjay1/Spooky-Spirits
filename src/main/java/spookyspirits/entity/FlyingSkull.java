@@ -10,15 +10,4 @@ public class FlyingSkull extends FlyingEntity {
 		super(type, world);
 		
 	}
-
-	
-	public boolean isFlaming() {
-		return true;
-	}
-	
-	@Override
-	public boolean isBurning() {
-		//return isFlaming();
-		return false;
-	}
 }

@@ -39,8 +39,7 @@ public final class SpiritsConfig {
 	public void setPotionBlacklist(final List<? extends String> list) {
 		if(POTION_BLACKLIST == null) {
 			POTION_BLACKLIST = BUILDER.comment("Potion effects that the WispEntity should not apply")
-				.defineList("potion_blacklist", list, o -> o instanceof String && 
-					ForgeRegistries.POTIONS.containsKey(new ResourceLocation((String)o)));
+				.defineList("potion_blacklist", list, o -> o instanceof String);
 		}
 	}
 	

@@ -110,16 +110,16 @@ public class ModelPhooka extends EntityModel<PhookaEntity> {
 		head.cubeList.add(new ModelBox(head, 25, 14, -2.0F, -3.5F, -9.0F, 4, 4, 4, 0.0F, false));
 
 		horn1 = new RendererModel(this);
-		horn1.setRotationPoint(-2.0F, -5.5F, -2.0F);
+		horn1.setRotationPoint(-2.0F, -5.5F, -3.0F);
 		rotate(horn1, 1.5708F, 1.3963F, 0.0F);
 		head.addChild(horn1);
-		horn1.cubeList.add(new ModelBox(horn1, 0, 0, -8.0F, 0.0F, -1.0F, 10, 0, 11, 0.0F, false));
+		horn1.cubeList.add(new ModelBox(horn1, 0, 0, -6.0F, 0.0F, 0.0F, 9, 0, 10, 0.0F, false));
 
 		horn2 = new RendererModel(this);
-		horn2.setRotationPoint(2.0F, -5.5F, -2.0F);
+		horn2.setRotationPoint(2.0F, -5.5F, -3.0F);
 		rotate(horn2, 1.5708F, 1.7453F, 0.0F);
 		head.addChild(horn2);
-		horn2.cubeList.add(new ModelBox(horn2, 44, 0, -8.0F, 0.0F, -1.0F, 10, 0, 11, 0.0F, false));
+		horn2.cubeList.add(new ModelBox(horn2, 44, 0, -6.0F, 0.0F, 0.0F, 9, 0, 10, 0.0F, false));
 
 		snout1 = new RendererModel(this);
 		snout1.setRotationPoint(0.0F, -5.5F, -5.0F);

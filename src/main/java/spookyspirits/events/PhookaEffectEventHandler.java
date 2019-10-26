@@ -3,6 +3,7 @@ package spookyspirits.events;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.SoundEvents;
 import net.minecraftforge.event.entity.PlaySoundAtEntityEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import spookyspirits.init.ModObjects;
@@ -11,8 +12,7 @@ import spookyspirits.init.ModObjects;
 public class PhookaEffectEventHandler {
 
 	@SubscribeEvent	
-	public static void onPlaySound
-	(final PlaySoundAtEntityEvent event) {
+	public static void onPlaySound(final PlaySoundAtEntityEvent event) {
 		if(!event.isCanceled() && event.getEntity() instanceof PlayerEntity) {
 			final PlayerEntity player = (PlayerEntity) event.getEntity();
 			if(player.getActivePotionEffect(ModObjects.PHOOKA_CURSE_FOOTSTEPS) != null) {
@@ -32,5 +32,10 @@ public class PhookaEffectEventHandler {
 				}
 			}
 		}
+	}
+	
+	@SubscribeEvent
+	public static void onPlaceSpawns(final WorldEvent.PotentialSpawns event) {
+		// TODO maybe we need to handle it here?
 	}
 }

@@ -29,8 +29,8 @@ public class ModelWillOWisp extends EntityModel<WillOWispEntity> {
 		GlStateManager.pushMatrix();
 		
 		this.setRotationAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
-		// f in and out
-		float fading = getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId() * 10, 0.08F, 1.1F);
+		// fade in and out
+		float fading = getFadeFactor(entityIn.ticksExisted + entityIn.getEntityId() * 10, 0.065F, 1.1F);
 		GlStateManager.enableBlend();
 		GlStateManager.enableNormalize();
 		GlStateManager.blendFunc(770, 771);
@@ -56,7 +56,7 @@ public class ModelWillOWisp extends EntityModel<WillOWispEntity> {
 	 **/
 	private static float getFadeFactor(final float ticks, final float fadeSpeed, final float amplitude) {
 		// adding this means more time will be spent at higher values
-		float upShift = amplitude * 0.4F;
+		float upShift = amplitude * 0.6F;
 		// f: a number between (-amplitude) and (amplitude), with (upShift) added
 		float fade = (float)Math.sin(ticks * fadeSpeed) * amplitude + upShift;
 		// return a single float between 0 and 1.0 (time spent outside of these bounds is clamped)

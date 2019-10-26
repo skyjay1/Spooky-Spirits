@@ -22,6 +22,7 @@ import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
@@ -206,7 +207,9 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 			final BlockPos pos, final Random rand) {
 		System.out.println("checking canSpawnHere for possessed pumpkin! Possible spawn at " + pos);
 		 // TODO
-		return world.canBlockSeeSky(pos);
+		return world.getDifficulty() != Difficulty.PEACEFUL && 
+				world.canBlockSeeSky(pos) && 
+				world.getBlockState(pos.down()).canEntitySpawn(world, pos.down(), entity);
 	}
 	
 	/**

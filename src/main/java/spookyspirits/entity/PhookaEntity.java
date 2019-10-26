@@ -239,7 +239,8 @@ public class PhookaEntity extends MonsterEntity {
 	}
 
 	public static boolean canSpawnHere(EntityType<PhookaEntity> entity, IWorld world, SpawnReason reason,
-			BlockPos pos, Random rand	) {
+			BlockPos pos, Random rand) {
+		// TODO
 		return true;
 	}
 	

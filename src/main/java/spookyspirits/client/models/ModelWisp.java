@@ -12,7 +12,6 @@ import spookyspirits.entity.WispEntity;
 public class ModelWisp extends EntityModel<WispEntity>{
 	
 	public static final Random rand = new Random(System.currentTimeMillis());
-	
 
 	private static final int SIZE = 6;
 	private WispPart[] parts;
@@ -23,10 +22,6 @@ public class ModelWisp extends EntityModel<WispEntity>{
 		this.textureHeight = 16;
 		parts = new WispPart[WispEntity.NUM_PARTS];
 		initParts();
-//		// DEBUG
-//		for(RendererModel r : parts) {
-//			System.out.println("rotations: x=" + r.rotationPointX + ", y=" + r.rotationPointY + ", z=" + r.rotationPointZ);
-//		}
 	}
 
 	@Override
@@ -41,6 +36,7 @@ public class ModelWisp extends EntityModel<WispEntity>{
 		GlStateManager.enableBlend();
 		GlStateManager.enableNormalize();
 		GlStateManager.blendFunc(770, 771);
+		// render each part
 		for(final WispPart p : parts) {
 			GlStateManager.color4f(1.0F, 1.0F, 1.0F, p.f);
 			p.model.render(scale);
@@ -53,23 +49,22 @@ public class ModelWisp extends EntityModel<WispEntity>{
 			float netHeadYaw, float headPitch, float scale) {
 //		// bobbing up and down
 //		final float bobbing = (float)Math.sin((entityIn.ticksExisted + entityIn.getEntityId()) * 0.12D) * 0.38F;
-//		GlStateManager.scalef(0, bobbing * scaleFactor, 0);
+//		GlStateManager.translatef(0, bobbing * scaleFactor, 0);
 		for(final WispPart p : this.parts) {
 			p.update(entityIn);
 		}
 	}
 	
 	private void initParts() {
-		final float MIN_RAD = 0.2F;
-		final float SIZE2 = SIZE * 2.0F;
-		final float SIZE4 = SIZE * 4.0F;
+		final float MIN_RAD = 0.25F;
+		final float RADIUS = 3.8F;
 		for(int i = 0; i < WispEntity.NUM_PARTS; i++) {
 			// set rotation points
-			float x = (rand.nextFloat() + MIN_RAD) * SIZE4 - SIZE2;
-			float y = (rand.nextFloat() + MIN_RAD) * SIZE4 - SIZE2;
-			float z = (rand.nextFloat() + MIN_RAD) * SIZE4 - SIZE2;
+			float x = (rand.nextFloat() + MIN_RAD) * SIZE * RADIUS * (rand.nextBoolean() ? 1F : -1F);
+			float y = (rand.nextFloat() + MIN_RAD) * SIZE * RADIUS * (rand.nextBoolean() ? 1F : -1F);
+			float z = (rand.nextFloat() + MIN_RAD) * SIZE * RADIUS * (rand.nextBoolean() ? 1F : -1F);
 			// set fade factors
-			float fi = rand.nextFloat() * 100F;
+			float fi = rand.nextFloat() * 200F;
 			float df = rand.nextFloat() * 0.08F;
 			this.parts[i] = new WispPart(this, i, x, y, z, fi, df);
 		}
@@ -98,9 +93,9 @@ public class ModelWisp extends EntityModel<WispEntity>{
 		
 		public void update(final WispEntity entity) {
 			if(entity.partRotations != null && entity.partMotions != null && i < entity.partMotions.length) {
-				model.rotateAngleX = (float)entity.partRotations[i].getX();
-				model.rotateAngleY = (float)entity.partRotations[i].getY();
-				model.rotateAngleZ = (float)entity.partRotations[i].getZ();
+				model.rotateAngleX = entity.partRotations[i].getX();
+				model.rotateAngleY = entity.partRotations[i].getY();
+				model.rotateAngleZ = entity.partRotations[i].getZ();
 			}
 			f = (float)Math.sin((fi + entity.ticksExisted) * df);
 		}

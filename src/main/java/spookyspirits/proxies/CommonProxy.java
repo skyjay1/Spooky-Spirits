@@ -1,9 +1,13 @@
 package spookyspirits.proxies;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.EntityClassification;
+import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EntityType;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.BlockNamedItem;
@@ -13,7 +17,10 @@ import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.Heightmap;
+import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import spookyspirits.block.BlockWispLight;
 import spookyspirits.block.SpoiledBerryBush;
 import spookyspirits.effect.PhookaEffect;
@@ -77,7 +84,7 @@ public class CommonProxy {
 		
 		event.getRegistry().register(
 				EntityType.Builder.create(WispEntity::new, EntityClassification.MONSTER)
-					.size(0.8F, 1.4F)
+					.size(0.9F, 1.85F)
 					.build("wisp").setRegistryName(SpookySpirits.MODID, "wisp")
 		);
 		
@@ -92,24 +99,29 @@ public class CommonProxy {
 					.size(0.35F, 0.85F).immuneToFire()
 					.build("fomor").setRegistryName(SpookySpirits.MODID, "fomor")
 		);
-		
-		registerEntitySpawns(); // TODO call this from somewhere else?
 	}
 	
-	protected void registerEntitySpawns() {
+	public void registerEntitySpawns() {
 		// PhookaEntity entity spawn info
-//		EntitySpawnPlacementRegistry.register(ModObjects.PHOOKA, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND,
-//				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, PhookaEntity::canSpawnHere);
-//		final Set<Biome> forestBiomes = new HashSet<>();
-//		forestBiomes.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.FOREST));
-//		forestBiomes.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.CONIFEROUS));
-//		forestBiomes.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.JUNGLE));
-//		for(final Biome b : forestBiomes) {
-//			b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.PHOOKA, 40, 1, 1));
-//		}
+		EntitySpawnPlacementRegistry.register(ModObjects.PHOOKA, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND,
+				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, PhookaEntity::canSpawnHere);
+		final Set<Biome> forestBiomes = new HashSet<>();
+		forestBiomes.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.FOREST));
+		forestBiomes.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.CONIFEROUS));
+		forestBiomes.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.JUNGLE));
+		for(final Biome b : forestBiomes) {
+			b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.PHOOKA, 40, 1, 1));
+		}
 		// Possessed Pumpkin entity spawn info
-		//EntitySpawnPlacementRegistry.register(ModObjects.POSSESSED_PUMPKIN, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND,
-		//		Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, PossessedPumpkinEntity::canSpawnHere);
+		EntitySpawnPlacementRegistry.register(ModObjects.POSSESSED_PUMPKIN, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND,
+				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, PossessedPumpkinEntity::canSpawnHere);
+		// Wisp entity spawn info
+		EntitySpawnPlacementRegistry.register(ModObjects.WISP, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND,
+				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, WispEntity::canSpawnHere);
+		for(final Biome b : ForgeRegistries.BIOMES.getValues()) {
+			b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.WISP, 35, 1, 1));
+			b.getSpawns(EntityClassification.MONSTER).add(new Biome.SpawnListEntry(ModObjects.POSSESSED_PUMPKIN, 30, 1, 2));
+		}
 	}
 	
 	public void registerEntityRenders() { }
