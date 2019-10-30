@@ -4,12 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Effect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
@@ -19,7 +16,6 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
@@ -36,13 +32,6 @@ public class SpookySpirits {
 	
 	public static final CommonProxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(),
 			() -> () -> new CommonProxy());
-
-	public static final ItemGroup TAB = new ItemGroup(MODID) {
-		@Override
-		public ItemStack createIcon() {
-			return new ItemStack(Blocks.DIRT);
-		}
-	};
 
 	public static final Logger LOGGER = LogManager.getFormatterLogger(MODID);
 	public static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder

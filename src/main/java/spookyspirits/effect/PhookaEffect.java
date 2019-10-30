@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.passive.SquidEntity;
 import net.minecraft.entity.projectile.EggEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Effect;
@@ -101,7 +102,7 @@ public abstract class PhookaEffect extends Effect {
 				final EffectInstance invis = entity.getActivePotionEffect(Effects.INVISIBILITY);
 				// if entity does not have full invisibility and the light level is low enough
 				if ((invis == null || invis.getDuration() < 100) && light < 6 + amp) {
-					entity.addPotionEffect(new EffectInstance(Effects.INVISIBILITY, 200, 0));
+					entity.addPotionEffect(new EffectInstance(Effects.INVISIBILITY, 100, 0));
 				}
 //
 //				if (entity.ticksExisted % 40 == 0)
@@ -182,14 +183,51 @@ public abstract class PhookaEffect extends Effect {
 						entity.getEntityWorld().playSound(p.getX(), p.getY(), p.getZ(), SoundEvents.ENTITY_EGG_THROW,
 								SoundCategory.PLAYERS, 1.0F, 1.0F / (entity.getRNG().nextFloat() * 0.4F + 0.8F), false);
 						entity.world.addEntity(egg);
-						// DEBUG
-						System.out.println("Throwing egg! x=" + egg.posX + ", y=" + egg.posY + ", z=" + egg.posZ +
-								", motion=" + egg.getMotion());
 						return;
 					}
 				}
 			}
 		}
 
+	}
+	
+	public static class Squid extends PhookaEffect {
+		public static final String NAME = "phooka_curse_squid";
+		public static final ResourceLocation REGISTRY_NAME = new ResourceLocation(SpookySpirits.MODID, NAME);
+		final double range;
+		
+		public Squid(final double rangeIn) {
+			super(false);
+			this.setRegistryName(REGISTRY_NAME);
+			range = rangeIn;
+		}
+		
+		public Squid() {
+			this(1.0D);
+		}
+		
+		@Override
+		public boolean shouldRender() {
+			return false;
+		}
+
+		@Override
+		protected void tick(final LivingEntity entity, final int amp) {
+			// find nearby squid to grab (it shouldn't be too far)
+			final List<SquidEntity> list = entity.getEntityWorld().getEntitiesWithinAABB(SquidEntity.class, entity.getBoundingBox().grow(range));
+			if(!list.isEmpty() && list.get(0).isAlive()) {
+				// grab the first squid and place it at player head position
+				final SquidEntity sq = list.get(0);
+				final double x = entity.posX;
+				final double y = entity.posY + entity.getEyeHeight() - (sq.getHeight() / 2);
+				final double z = entity.posZ;
+				sq.setPosition(x, y, z);
+				sq.setMotion(entity.getMotion());
+				// stop the squid from suffocating or being killed
+				sq.heal(0.1F);
+				sq.setAir(300);
+			}
+		}
+		
 	}
 }

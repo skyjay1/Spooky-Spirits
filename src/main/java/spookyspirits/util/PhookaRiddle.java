@@ -8,7 +8,6 @@ import com.google.common.collect.Lists;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.IStringSerializable;
-import spookyspirits.effect.PhookaEffect;
 
 public final class PhookaRiddle implements IStringSerializable {
 	
@@ -28,8 +27,8 @@ public final class PhookaRiddle implements IStringSerializable {
 		this.optionsTranslationKeys = options;
 		this.answer = (byte)correctOption;
 		this.difficulty = type;
-		this.blessing = answerRight;
-		this.cursing = answerWrong;
+		this.blessing = answerRight != null ? answerRight : p -> {};
+		this.cursing = answerWrong != null ? answerWrong : p -> {};
 		
 	}
 
@@ -43,8 +42,8 @@ public final class PhookaRiddle implements IStringSerializable {
 	public String toString() {
 		String s = "name=" + name + ", answer=" + answer;
 		if(optionsTranslationKeys != null && optionsTranslationKeys.length == 4) {
-			s += ", option1=" + optionsTranslationKeys[0] + ", option2=" + optionsTranslationKeys[1]
-					+ ", option3=" + optionsTranslationKeys[2] + ", option4=" + optionsTranslationKeys[3];
+			s += ", option0=" + optionsTranslationKeys[0] + ", option1=" + optionsTranslationKeys[1]
+					+ ", option2=" + optionsTranslationKeys[2] + ", option3=" + optionsTranslationKeys[3];
 		}
 		return s;
 	}
@@ -63,11 +62,6 @@ public final class PhookaRiddle implements IStringSerializable {
 	public byte getCorrectAnswer() {
 		return answer;
 	}
-	
-	/** @return an int representing the amplifier to apply as a blessing effect **/
-//	public int getBlessingAmplifier() {
-//		return blessingAmplifier;
-//	}
 	
 	/** @return the difficulty level of the riddle **/
 	public PhookaRiddle.Type getDifficulty() {
@@ -92,8 +86,8 @@ public final class PhookaRiddle implements IStringSerializable {
 		private String optionTranslationKey2 = "";
 		private String optionTranslationKey3 = "";
 		private PhookaRiddle.Type type = Type.EASY;
-		private Consumer<PlayerEntity> blessing = p -> p.giveExperiencePoints(10);
-		private Consumer<PlayerEntity> cursing = p -> p.experienceTotal = 0;
+		private Consumer<PlayerEntity> blessing = null;
+		private Consumer<PlayerEntity> cursing = null;
 		private final Random rand = new Random();
 		
 		private Builder(final String id) {
@@ -145,8 +139,12 @@ public final class PhookaRiddle implements IStringSerializable {
 		 * @param reward the effect to apply upon successfully answering a riddle
 		 * @return instance for chaining methods
 		 **/
-		public Builder setBlessing(final Consumer<PlayerEntity> reward) {
-			this.blessing = reward;
+		public Builder addBlessing(final Consumer<PlayerEntity> reward) {
+			if(this.blessing == null) {
+				this.blessing = reward;
+			} else {
+				this.blessing = this.blessing.andThen(reward);
+			}
 			return this;
 		}
 		
@@ -154,8 +152,12 @@ public final class PhookaRiddle implements IStringSerializable {
 		 * @param punishment the effect to apply upon failure to answer a riddle
 		 * @return instance for chaining methods
 		 **/
-		public Builder setCurse(final Consumer<PlayerEntity> punishment) {
-			this.cursing = punishment;
+		public Builder addCurse(final Consumer<PlayerEntity> punishment) {
+			if(this.cursing == null) {
+				this.cursing = punishment;
+			} else {
+				this.cursing = this.cursing.andThen(punishment);
+			}
 			return this;
 		}
 		

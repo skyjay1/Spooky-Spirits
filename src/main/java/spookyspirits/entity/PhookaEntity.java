@@ -233,9 +233,9 @@ public class PhookaEntity extends MonsterEntity {
 	
 	@Nullable
 	private static PhookaRiddle getRiddleFor(final PlayerEntity player) {
-		//return PhookaRiddles.getByName("footsteps");
+		return PhookaRiddles.getByName("pen");
 		// TODO finish testing one by one
-		return PhookaRiddles.getRandom(player.getRNG());
+		//return PhookaRiddles.getRandom(player.getRNG());
 	}
 
 	public static boolean canSpawnHere(EntityType<PhookaEntity> entity, IWorld world, SpawnReason reason,

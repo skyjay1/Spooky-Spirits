@@ -49,6 +49,7 @@ public final class ModObjects {
 	@ObjectHolder(PhookaEffect.Eggs.NAME)
 	public static final Effect PHOOKA_CURSE_EGGS = null;
 	
-
+	@ObjectHolder(PhookaEffect.Squid.NAME)
+	public static final Effect PHOOKA_CURSE_SQUID = null;
 
 }

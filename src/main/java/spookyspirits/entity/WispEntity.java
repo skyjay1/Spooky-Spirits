@@ -234,7 +234,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	
 	public static boolean canSpawnHere(final EntityType<WispEntity> entity, final IWorld world, final SpawnReason reason,
 			final BlockPos pos, final Random rand) {
-		System.out.println("checking canSpawnHere for wisp! Possible spawn at " + pos);
+		//System.out.println("checking canSpawnHere for wisp! Possible spawn at " + pos);
 		 // TODO
 		return world.canBlockSeeSky(pos) && world.getBrightness(pos) < 8;
 	}
@@ -269,7 +269,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 			Effects.WITHER.getRegistryName().toString(), Effects.LEVITATION.getRegistryName().toString(),
 			Effects.HERO_OF_THE_VILLAGE.getRegistryName().toString(),
 			PhookaEffect.Footsteps.REGISTRY_NAME.toString(), PhookaEffect.Sponge.REGISTRY_NAME.toString(),
-			PhookaEffect.Eggs.REGISTRY_NAME.toString()
+			PhookaEffect.Eggs.REGISTRY_NAME.toString(), PhookaEffect.Squid.REGISTRY_NAME.toString()
 		));
 	}
 
