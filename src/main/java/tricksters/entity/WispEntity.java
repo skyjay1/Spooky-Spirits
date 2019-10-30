@@ -135,9 +135,9 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 				}
 			}
 			// random despawn during day
-//			if(this.world.isDaytime() && rand.nextInt(4000) == 0) {
-//				this.remove();
-//			}
+			if(this.world.getDimension().isDaytime() && rand.nextInt(4000) == 0) {
+				this.remove();
+			}
 		}
 		// client-side updates
 		if(this.world.isRemote) {
@@ -174,23 +174,20 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	public ILivingEntityData onInitialSpawn(IWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason,
 			@Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag) {
 		spawnDataIn = super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
-		// DEBUG
-		Tricksters.LOGGER.info("Spawning Wisp at " + this.getPosition());
 		// determine spawn variant
 		final byte variant = (byte)rand.nextInt(3);
 		this.setVariant(variant);
 		// spawn WillOWisps nearby
-		if(this.isServerWorld() && !worldIn.isRemote() && worldIn instanceof World) {
-			for(int numSpawns = 0; numSpawns < 12; numSpawns++) {
-				final WillOWispEntity w = ModObjects.WILL_O_WISP.create((World) worldIn);
-				w.setLocationAndAngles(
-						this.posX + rand.nextDouble() - 0.5D, 
-						this.posY + rand.nextDouble(), 
-						this.posZ + rand.nextDouble() - 0.5D, 
-						rand.nextInt(4) * 90F, 0);
+		if(this.isServerWorld() && !worldIn.isRemote()) {
+			final double RADIUS = 6.0D;
+			for(int numSpawns = 8 + rand.nextInt(8); numSpawns > 0; numSpawns--) {
+				final double x = this.posX + rand.nextDouble() * RADIUS * 2 - RADIUS;
+				final double y = this.posY + rand.nextDouble() * RADIUS * 2 - RADIUS;
+				final double z = this.posZ + rand.nextDouble() * RADIUS * 2 - RADIUS;
+				final WillOWispEntity w = ModObjects.WILL_O_WISP.create(this.getEntityWorld());
+				w.setLocationAndAngles(x, y, z, rand.nextInt(4) * 90F, 0);
 				w.setWisp(this.getUniqueID());
 				w.setVariant(variant);
-				Tricksters.LOGGER.info("Spawning Will O Wisp at " + w.getPosition());
 				worldIn.addEntity(w);
 			}
 			/*

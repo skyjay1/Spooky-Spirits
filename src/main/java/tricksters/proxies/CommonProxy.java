@@ -106,11 +106,12 @@ public class CommonProxy {
 		// Wisp entity spawn info
 		EntitySpawnPlacementRegistry.register(ModObjects.WISP, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND,
 				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, WispEntity::canSpawnHere);
+		// biome spawns
 		for(final Biome b : ForgeRegistries.BIOMES.getValues()) {
-			b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.WISP, 25, 1, 1));
-			b.getSpawns(EntityClassification.MONSTER).add(new Biome.SpawnListEntry(ModObjects.POSSESSED_PUMPKIN, 10, 1, 2));
+			b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.WISP, 30, 1, 1));
+			b.getSpawns(EntityClassification.MONSTER).add(new Biome.SpawnListEntry(ModObjects.POSSESSED_PUMPKIN, 20, 1, 2));
 			if(b.getCategory() == Biome.Category.FOREST) {
-				b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.PHOOKA, 20, 1, 1));
+				b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.PHOOKA, 30, 1, 1));
 			}
 		}
 	}
