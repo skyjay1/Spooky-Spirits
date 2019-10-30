@@ -41,7 +41,6 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -68,6 +67,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 
 	public WispEntity(EntityType<? extends WispEntity> type, World world) {
 		super(type, world);
+		Tricksters.disableCollisionForEntity(this);
 		// initialize part rotation arrays
 		partRotations = new Vector3f[NUM_PARTS];
 		partMotions = new Vector3f[NUM_PARTS];
@@ -134,6 +134,10 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 					this.remove();
 				}
 			}
+			// random despawn during day
+//			if(this.world.isDaytime() && rand.nextInt(4000) == 0) {
+//				this.remove();
+//			}
 		}
 		// client-side updates
 		if(this.world.isRemote) {
@@ -170,11 +174,26 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	public ILivingEntityData onInitialSpawn(IWorld worldIn, DifficultyInstance difficultyIn, SpawnReason reason,
 			@Nullable ILivingEntityData spawnDataIn, @Nullable CompoundNBT dataTag) {
 		spawnDataIn = super.onInitialSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+		// DEBUG
+		Tricksters.LOGGER.info("Spawning Wisp at " + this.getPosition());
 		// determine spawn variant
 		final byte variant = (byte)rand.nextInt(3);
 		this.setVariant(variant);
 		// spawn WillOWisps nearby
-		if(this.isServerWorld() /*// TODO re-enable after testing: && reason == SpawnReason.NATURAL */) {
+		if(this.isServerWorld() && !worldIn.isRemote() && worldIn instanceof World) {
+			for(int numSpawns = 0; numSpawns < 12; numSpawns++) {
+				final WillOWispEntity w = ModObjects.WILL_O_WISP.create((World) worldIn);
+				w.setLocationAndAngles(
+						this.posX + rand.nextDouble() - 0.5D, 
+						this.posY + rand.nextDouble(), 
+						this.posZ + rand.nextDouble() - 0.5D, 
+						rand.nextInt(4) * 90F, 0);
+				w.setWisp(this.getUniqueID());
+				w.setVariant(variant);
+				Tricksters.LOGGER.info("Spawning Will O Wisp at " + w.getPosition());
+				worldIn.addEntity(w);
+			}
+			/*
 			final BlockPos myPos = this.getPosition();
 			final int minRadius = 24;
 			final int extraRadius = 16;
@@ -190,18 +209,22 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 					int y = rand.nextInt(extraRadius + i);
 					int z = (int)Math.round((minRadius + rand.nextInt(extraRadius)) * cosine);
 					int dy = 1 + rand.nextInt(3);
-					BlockPos p = WispEntity.getBestY(this.getEntityWorld(), myPos.add(x, y, z), dy);
-					// if the chosen position is actually air, place a Will O Wisp Entity
-					if(this.getEntityWorld().isAirBlock(p)) {
-						final WillOWispEntity w = ModObjects.WILL_O_WISP.create(this.world, (CompoundNBT)null, (ITextComponent)null, (PlayerEntity)null, p, SpawnReason.MOB_SUMMONED, false, false);
-						w.setLocationAndAngles(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D, rand.nextInt(4) * 90F, 0);
-						w.setWisp(this.getUniqueID());
-						w.setVariant(variant);
-						worldIn.addEntity(w);
-						break;
+					BlockPos p = myPos.add(x, y, z);
+					if(worldIn.getChunk(p.getX() >> 4, p.getZ() >> 4, ChunkStatus.FULL, false) != null) {
+						p = WispEntity.getBestY((World)worldIn, p, dy);
+						// if the chosen position is actually air, place a Will O Wisp Entity
+						if(worldIn.isAirBlock(p)) {
+							final WillOWispEntity w = ModObjects.WILL_O_WISP.create((World) worldIn);
+							w.setLocationAndAngles(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D, rand.nextInt(4) * 90F, 0);
+							w.setWisp(this.getUniqueID());
+							w.setVariant(variant);
+							worldIn.addEntity(w);
+							break;
+						}
 					}
 				}
-			}
+			} 
+			*/
 		}
 		return spawnDataIn;
 	}
@@ -229,14 +252,12 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	
 	@Override
 	public int getLightLevel() {
-		return 7;
+		return 8;
 	}
 	
 	public static boolean canSpawnHere(final EntityType<WispEntity> entity, final IWorld world, final SpawnReason reason,
 			final BlockPos pos, final Random rand) {
-		//System.out.println("checking canSpawnHere for wisp! Possible spawn at " + pos);
-		 // TODO
-		return world.canBlockSeeSky(pos) && world.getBrightness(pos) < 8;
+		return world.canBlockSeeSky(pos) && !world.getDimension().isDaytime();
 	}
 	
 	/** 

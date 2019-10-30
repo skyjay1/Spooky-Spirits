@@ -328,24 +328,15 @@ public final class PhookaRiddles {
 				.addBlessing(new PhookaGiveItem(new ItemStack(Items.INK_SAC, 64)))
 				.addCurse(p -> {
 					// TODO a squid is stuck on your head, limiting your vision
-					final String TEAM = "nocoll";
 					if(p.isServerWorld()) {
 						final SquidEntity squid = EntityType.SQUID.create(p.getEntityWorld());
 						squid.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0D);
 						squid.setNoGravity(true);
 						squid.setPosition(p.posX, p.posY + p.getEyeHeight(), p.posZ);
-						// attempt to disable collision for this squid
-						if(squid.getEntityWorld().getScoreboard().getTeam(TEAM) == null) {
-							squid.getEntityWorld().getScoreboard().createTeam(TEAM);
-						}
-						final ScorePlayerTeam t = p.getWorldScoreboard().getTeam(TEAM);
-						squid.getEntityWorld().getScoreboard().getTeam(TEAM).setCollisionRule(CollisionRule.NEVER);
-						squid.getEntityWorld().getScoreboard().addPlayerToTeam(squid.getCachedUniqueIdString(), t);
+						// disable collision
+						Tricksters.disableCollisionForEntity(squid);
 						// add the squid to the world
 						p.getEntityWorld().addEntity(squid);
-
-						//squid.startRiding(p, true);
-						//p.addShoulderEntity(squid.serializeNBT());
 					}
 				})
 				.addCurse(new PhookaGiveEffect(PhookaEffect.Squid.REGISTRY_NAME, 4000, 0))

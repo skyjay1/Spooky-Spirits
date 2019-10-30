@@ -205,8 +205,6 @@ public class PossessedPumpkinEntity extends MonsterEntity {
 	
 	public static boolean canSpawnHere(final EntityType<PossessedPumpkinEntity> entity, final IWorld world, final SpawnReason reason,
 			final BlockPos pos, final Random rand) {
-		System.out.println("checking canSpawnHere for possessed pumpkin! Possible spawn at " + pos);
-		 // TODO
 		return world.getDifficulty() != Difficulty.PEACEFUL && 
 				world.canBlockSeeSky(pos) && 
 				world.getBlockState(pos.down()).canEntitySpawn(world, pos.down(), entity);

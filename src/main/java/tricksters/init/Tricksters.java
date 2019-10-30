@@ -5,9 +5,12 @@ import org.apache.logging.log4j.Logger;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.potion.Effect;
+import net.minecraft.scoreboard.ScorePlayerTeam;
+import net.minecraft.scoreboard.Team.CollisionRule;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.RegistryEvent;
@@ -51,11 +54,11 @@ public class Tricksters {
 			.add();
 	}	
 	
-	@SubscribeEvent
-	public static void onServerStarting(final FMLServerStartingEvent event) {
-		LOGGER.info(MODID + ": RegisterSpawns");
-		PROXY.registerEntitySpawns();
-	}
+//	@SubscribeEvent
+//	public static void onServerStarting(final FMLServerStartingEvent event) {
+//		LOGGER.info(MODID + ": RegisterSpawns");
+//		PROXY.registerEntitySpawns();
+//	}
 	
 	@SubscribeEvent
 	public static void registerBlocks(final RegistryEvent.Register<Block> event) {
@@ -93,5 +96,19 @@ public class Tricksters {
 		LOGGER.debug(MODID + ": RegisterEffects");
 		PROXY.registerEffects(event);
 		PhookaRiddles.init();
+	}
+	
+	/**
+	 * Adds the entity to a team that has all entity collision disabled
+	 * @param entity the entity
+	 **/
+	public static void disableCollisionForEntity(final LivingEntity entity) {
+		final String TEAM = "nocollision";
+		if(entity.getEntityWorld().getScoreboard().getTeam(TEAM) == null) {
+			entity.getEntityWorld().getScoreboard().createTeam(TEAM);
+			entity.getEntityWorld().getScoreboard().getTeam(TEAM).setCollisionRule(CollisionRule.NEVER);
+		}
+		final ScorePlayerTeam t = entity.getEntityWorld().getScoreboard().getTeam(TEAM);
+		entity.getEntityWorld().getScoreboard().addPlayerToTeam(entity.getCachedUniqueIdString(), t);
 	}
 }

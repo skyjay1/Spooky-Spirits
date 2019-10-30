@@ -96,7 +96,7 @@ public class PhookaGui extends Screen {
 	private int answer = 0;
 
 	protected PhookaGui(final PhookaEntity phookaIn, final PlayerEntity playerIn, final PhookaRiddle riddleIn) {
-		super(new TranslationTextComponent("entity.spookyspirits.phooka.name"));
+		super(new TranslationTextComponent("entity.tricksters.phooka.name"));
 		this.page = TricksterConfig.CONFIG.areRiddlesForced() ? 1 : 0;
 		this.phooka = phookaIn;
 		this.player = playerIn;
@@ -150,7 +150,7 @@ public class PhookaGui extends Screen {
 		this.blit(x, y, FACE_TEXTURE_X + (FACE_WIDTH + SEP) * iconNum, FACE_TEXTURE_Y, FACE_WIDTH, FACE_HEIGHT);
 		
 		// draw Phooka name under icon
-		final String phookaName = new TranslationTextComponent("entity.spookyspirits.phooka").applyTextStyle(TextFormatting.ITALIC).getFormattedText();
+		final String phookaName = new TranslationTextComponent("entity.tricksters.phooka").applyTextStyle(TextFormatting.ITALIC).getFormattedText();
 		this.font.drawString(phookaName, BG_START_X + FACE_START_X + (FACE_WIDTH - this.font.getStringWidth(phookaName)) / 2, 
 				BG_START_Y + FACE_START_Y + FACE_HEIGHT + 12, 0);
 		
@@ -162,6 +162,11 @@ public class PhookaGui extends Screen {
 			updateBGPos();
 			// draw riddle text
 			drawText(this.riddle.getRiddleTranslationKey());
+		} else if(this.page == 2) {
+			final String s = answer == this.riddle.getCorrectAnswer()
+					? "phooka.answer_correct"
+					: "phooka.answer_wrong";
+			drawText(s);
 		}
 		
 		// draw buttons, etc.

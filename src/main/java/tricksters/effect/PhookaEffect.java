@@ -222,7 +222,8 @@ public abstract class PhookaEffect extends Effect {
 				final double y = entity.posY + entity.getEyeHeight() - (sq.getHeight() / 2);
 				final double z = entity.posZ;
 				sq.setPosition(x, y, z);
-				sq.setMotion(entity.getMotion());
+				sq.setBoundingBox(entity.getBoundingBox().shrink(0.01D));
+				//sq.setMotion(entity.getMotion().mul(1.1D, 0.01D, 1.1D));
 				// stop the squid from suffocating or being killed
 				sq.heal(0.1F);
 				sq.setAir(300);

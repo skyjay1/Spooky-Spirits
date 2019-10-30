@@ -24,10 +24,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tricksters.entity.goal.PlaceLightGoal;
+import tricksters.init.Tricksters;
 
 public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 
@@ -41,6 +43,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 	public WillOWispEntity(EntityType<? extends FlyingEntity> type, World world) {
 		super(type, world);
 		this.moveController = new WillOWispEntity.MoveHelperController(this);
+		Tricksters.disableCollisionForEntity(this);
 	}
 	
 	@Override
@@ -55,6 +58,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new PlaceLightGoal(this, getLightLevel()));
 		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 3.8D, 1.0D));
+		this.goalSelector.addGoal(3, new MoveAwayFromWispGoal(this, 48.0D, 1.6D));
 	}
 
 	@Override
@@ -219,9 +223,9 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 
 	class MoveToWispGoal extends Goal {
 
-		private final WillOWispEntity willowisp;
-		private final double range;
-		private final double speedFactor;
+		protected final WillOWispEntity willowisp;
+		protected final double range;
+		protected final double speedFactor;
 		
 		public MoveToWispGoal(final WillOWispEntity willowispIn, final double detectionRadius, final double speed) {
 			this.willowisp = willowispIn;
@@ -232,7 +236,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		
 		@Override
 		public boolean shouldExecute() {
-			return this.willowisp.getWisp() != null && isPlayerClose();
+			return this.willowisp.getWisp() != null && isPlayerClose() && willowisp.ticksExisted % 2 == 0;
 		}
 		
 		@Override
@@ -242,10 +246,6 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		
 		@Override
 		public void tick() {
-			// only execute half the time (reduce lag)
-			if(this.willowisp.ticksExisted % 2 == 0) {
-				return;
-			}
 			// choose a random position within range and attempt to move there
 			final WispEntity wispEntity = this.willowisp.getWisp();
 			final BlockPos wispPos = wispEntity.getPosition();
@@ -263,17 +263,27 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 				double y = willowisp.rand.nextDouble() * radius * 0.5D - radius * 0.25D;
 				double z = willowisp.rand.nextDouble() * radius - radius * 0.5D;
 				int dy = 1 + willowisp.rand.nextInt(3);
-				pos = WispEntity.getBestY(willowisp.getEntityWorld(), origin.add(x, y, z), dy);
-				if(wispPos.distanceSq(pos) < curDisSq && willowisp.getEntityWorld().isAirBlock(pos)) {
-					// if air block, set as move target
-					willowisp.getMoveHelper().setMoveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, speedFactor);
-					return;
+				pos = origin.add(x, y, z);
+				if(willowisp.getEntityWorld().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.FULL, false) != null) {
+					pos = WispEntity.getBestY(willowisp.getEntityWorld(), pos, dy);
+					if(shouldMoveTo(pos, curDisSq)) {
+						// if air block, set as move target
+						willowisp.getMoveHelper().setMoveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, speedFactor);
+						return;
+					}
 				}
 			}
-			
+		}
+		
+		protected boolean shouldMoveTo(final BlockPos pos, final double curDistanceSq) {
+			if(willowisp.hasWisp()) {
+				final BlockPos wispPos = willowisp.getWisp().getPosition();
+				return wispPos.distanceSq(pos) < curDistanceSq && willowisp.getEntityWorld().isAirBlock(pos);
+			}
+			return false;
 		}
 
-		private boolean isPlayerClose() {
+		protected boolean isPlayerClose() {
 			final List<PlayerEntity> list = willowisp.getEntityWorld()
 					.getEntitiesWithinAABB(PlayerEntity.class, 
 							willowisp.getBoundingBox().grow(range));
@@ -285,7 +295,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		 * @return the closest player within range, or null
 		 **/
 		@Nullable
-		private PlayerEntity getClosestPlayer() {
+		protected PlayerEntity getClosestPlayer() {
 			final List<PlayerEntity> list = willowisp.getEntityWorld()
 					.getEntitiesWithinAABB(PlayerEntity.class, 
 							willowisp.getBoundingBox().grow(range));
@@ -303,6 +313,49 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 				}
 			}
 			return closestPlayer;
+		}
+
+	}
+	
+	class MoveAwayFromWispGoal extends MoveToWispGoal {
+
+		private final double targetDistanceSq;
+		private final int moveAwayTime;
+		private int timeMoving;
+		
+		public MoveAwayFromWispGoal(final WillOWispEntity willowispIn, final double targetDistance, final double speed) {
+			super(willowispIn, 15.0D, speed);
+			this.moveAwayTime = 1000;
+			this.targetDistanceSq = targetDistance * targetDistance;
+			this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+		}
+		
+		@Override
+		public boolean shouldExecute() {
+			final double currentDisSq = this.willowisp.hasWisp()
+					? willowisp.getWisp().getPosition().distanceSq(willowisp.getPosition())
+					: 1.0D;
+			return this.willowisp.getWisp() != null && !isPlayerClose() && (currentDisSq < targetDistanceSq || timeMoving-- < 0);
+		}
+		
+		@Override
+		public void startExecuting() {
+			timeMoving = moveAwayTime + willowisp.getRNG().nextInt(moveAwayTime);
+			super.startExecuting();
+		}
+		
+		@Override
+		public boolean shouldContinueExecuting() {
+			return false;
+		}
+		
+		@Override
+		protected boolean shouldMoveTo(final BlockPos pos, final double curDistanceSq) {
+			if(willowisp.hasWisp()) {
+				final BlockPos wispPos = willowisp.getWisp().getPosition();
+				return wispPos.distanceSq(pos) > curDistanceSq && willowisp.getEntityWorld().isAirBlock(pos);
+			}
+			return false;
 		}
 
 	}

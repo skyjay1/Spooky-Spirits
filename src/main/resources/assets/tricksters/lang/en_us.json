@@ -13,6 +13,8 @@
   
   "_comment": "Phooka Riddles",
   "phooka.offer_riddle": "Darest thou answer my riddle, traveler?",
+  "phooka.answer_correct": "That is right!",
+  "phooka.answer_wrong": "Wrong! Be ye cursed!",
   "phooka.riddle.air": "I touch your face,\nI am in your words,\nI am lack of space,\nand beloved by birds.",
   "phooka.riddle.darkness": "The more of it there is, the less you see",
   "phooka.riddle.coal": "What is black when you acquire it,\nRed when you use it,\nAnd grey when you dispose of it?",

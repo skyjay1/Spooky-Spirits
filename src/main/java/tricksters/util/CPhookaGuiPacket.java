@@ -8,8 +8,6 @@ import javax.annotation.Nullable;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.play.IServerPlayNetHandler;
-import net.minecraft.network.play.ServerPlayNetHandler;
 import net.minecraft.potion.Effects;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -59,7 +57,7 @@ public class CPhookaGuiPacket {
 		if (context.getDirection().getReceptionSide() == LogicalSide.SERVER) {
             context.enqueueWork(() -> {
             	// BEGIN ENQUEUE
-        		Tricksters.LOGGER.info("Processing Phooka GUI packet. Riddle = " + message.getRiddleId() + ", userInput = " + message.getPlayerAnswer());
+        		//Tricksters.LOGGER.info("Processing Phooka GUI packet. Riddle = " + message.getRiddleId() + ", userInput = " + message.getPlayerAnswer());
             	
         		final ServerPlayerEntity player = context.getSender();
             	if(player != null && player.isServerWorld() && !player.getEntityWorld().isRemote) {
@@ -72,11 +70,11 @@ public class CPhookaGuiPacket {
     						// woohoo!
     						riddle.getBlessing().accept(player);
     						clearCurses(player);
-    						Tricksters.LOGGER.info("Answer was correct!");
+    						//Tricksters.LOGGER.info("Answer was correct!");
     					} else {
     						// aw man :(
     						riddle.getCursing().accept(player);
-    						Tricksters.LOGGER.info("Answer was wrong!");
+    						//Tricksters.LOGGER.info("Answer was wrong!");
     					}
     					// despawn the entity
     					for(final PhookaEntity e : phookaList) {

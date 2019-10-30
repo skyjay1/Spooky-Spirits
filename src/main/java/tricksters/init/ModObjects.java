@@ -1,6 +1,7 @@
 package tricksters.init;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.potion.Effect;
@@ -14,16 +15,28 @@ public final class ModObjects {
 	private ModObjects() {}
 	
 	@ObjectHolder("wisp")
-	public static final EntityType<WispEntity> WISP = null;
+	public static final EntityType<WispEntity> WISP = 
+		EntityType.Builder.create(WispEntity::new, EntityClassification.MONSTER)
+		.size(0.9F, 1.85F)
+		.build("wisp");
 	
 	@ObjectHolder("willowisp")
-	public static final EntityType<WillOWispEntity> WILL_O_WISP = null;
+	public static final EntityType<WillOWispEntity> WILL_O_WISP = 
+		EntityType.Builder.create(WillOWispEntity::new, EntityClassification.MONSTER)
+		.size(0.5F, 0.5F).immuneToFire()
+		.build("willowisp");
 	
 	@ObjectHolder("possessed_pumpkin")
-	public static final EntityType<PossessedPumpkinEntity> POSSESSED_PUMPKIN = null;
+	public static final EntityType<PossessedPumpkinEntity> POSSESSED_PUMPKIN = 
+		EntityType.Builder.create(PossessedPumpkinEntity::new, EntityClassification.MONSTER)
+		.size(0.98F, 1.2F)
+		.build("possessed_pumpkin");
 	
 	@ObjectHolder("phooka")
-	public static final EntityType<PhookaEntity> PHOOKA = null;
+	public static final EntityType<PhookaEntity> PHOOKA = 
+		EntityType.Builder.create(PhookaEntity::new, EntityClassification.CREATURE)
+		.size(0.85F, 2.3F)
+		.build("phooka");
 	
 	@ObjectHolder("wisp_light")
 	public static final Block WISP_LIGHT = null;
