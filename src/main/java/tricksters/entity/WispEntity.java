@@ -181,9 +181,9 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		if(this.isServerWorld() && !worldIn.isRemote()) {
 			final double RADIUS = 6.0D;
 			for(int numSpawns = 8 + rand.nextInt(8); numSpawns > 0; numSpawns--) {
-				final double x = this.posX + rand.nextDouble() * RADIUS * 2 - RADIUS;
-				final double y = this.posY + rand.nextDouble() * RADIUS * 2 - RADIUS;
-				final double z = this.posZ + rand.nextDouble() * RADIUS * 2 - RADIUS;
+				final double x = this.posX;// + rand.nextDouble() * RADIUS * 2 - RADIUS;
+				final double y = this.posY + this.getEyeHeight() + rand.nextDouble() * RADIUS * 2;// - RADIUS;
+				final double z = this.posZ;// + rand.nextDouble() * RADIUS * 2 - RADIUS;
 				final WillOWispEntity w = ModObjects.WILL_O_WISP.create(this.getEntityWorld());
 				w.setLocationAndAngles(x, y, z, rand.nextInt(4) * 90F, 0);
 				w.setWisp(this.getUniqueID());
