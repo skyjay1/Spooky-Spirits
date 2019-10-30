@@ -14,8 +14,8 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 version = '0.0.1-beta'
-group = 'spookyspirits' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'SpookySpirits-1.14.4'
+group = 'tricksters' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = 'Tricksters-1.14.4'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
@@ -113,7 +113,7 @@ dependencies {
 jar {
     manifest {
         attributes([
-            "Specification-Title": "Spooky-Spirits",
+            "Specification-Title": "Tricksters",
             "Specification-Vendor": "skyjay1",
             "Specification-Version": "1", // We are version 1 of ourselves
             "Implementation-Title": project.name,
