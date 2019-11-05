@@ -9,7 +9,6 @@ public class ClientProxy extends CommonProxy {
 	@Override
 	public void registerEntityRenders() {
 		// register renders
-		RenderingRegistry.registerEntityRenderingHandler(FlyingSkull.class, RenderFlyingSkull::new);
 		RenderingRegistry.registerEntityRenderingHandler(WispEntity.class, RenderWisp::new);
 		RenderingRegistry.registerEntityRenderingHandler(WillOWispEntity.class, RenderWillOWisp::new);
 		RenderingRegistry.registerEntityRenderingHandler(PossessedPumpkinEntity.class, RenderPossessedPumpkin::new);

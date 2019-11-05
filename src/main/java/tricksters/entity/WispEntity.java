@@ -41,6 +41,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -134,10 +135,6 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 					this.remove();
 				}
 			}
-			// random despawn during day
-			if(this.world.getDimension().isDaytime() && rand.nextInt(4000) == 0) {
-				this.remove();
-			}
 		}
 		// client-side updates
 		if(this.world.isRemote) {
@@ -179,10 +176,10 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 		this.setVariant(variant);
 		// spawn WillOWisps nearby
 		if(this.isServerWorld() && !worldIn.isRemote()) {
-			final double RADIUS = 6.0D;
+			//final double RADIUS = 6.0D;
 			for(int numSpawns = 8 + rand.nextInt(8); numSpawns > 0; numSpawns--) {
 				final double x = this.posX;// + rand.nextDouble() * RADIUS * 2 - RADIUS;
-				final double y = this.posY + this.getEyeHeight() + rand.nextDouble() * RADIUS * 2;// - RADIUS;
+				final double y = this.posY + rand.nextDouble();// - RADIUS;
 				final double z = this.posZ;// + rand.nextDouble() * RADIUS * 2 - RADIUS;
 				final WillOWispEntity w = ModObjects.WILL_O_WISP.create(this.getEntityWorld());
 				w.setLocationAndAngles(x, y, z, rand.nextInt(4) * 90F, 0);
@@ -235,6 +232,11 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	public boolean isPushedByWater() {
 		return false;
 	}
+
+	@Override
+	public float getCollisionBorderSize() {
+		return 0.0F;
+	}
 	
 	@Override
 	@OnlyIn(Dist.CLIENT)
@@ -254,7 +256,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 	
 	public static boolean canSpawnHere(final EntityType<WispEntity> entity, final IWorld world, final SpawnReason reason,
 			final BlockPos pos, final Random rand) {
-		return world.canBlockSeeSky(pos) && !world.getDimension().isDaytime();
+		return !world.isRemote() && world.canBlockSeeSky(pos.up()) && !world.getDimension().isDaytime();
 	}
 	
 	/** 
@@ -524,7 +526,7 @@ public class WispEntity extends FlyingEntity implements ILightEntity {
 
 		WispAction(final String nameIn, final int defaultChance) {
 			name = nameIn;
-			defaultPercentChance = defaultChance;
+			defaultPercentChance = MathHelper.clamp(defaultChance, 0, 100);
 			ACTIONS.add(this);
 		}
 		

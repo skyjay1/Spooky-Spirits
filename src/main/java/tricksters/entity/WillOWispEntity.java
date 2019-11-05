@@ -58,7 +58,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new PlaceLightGoal(this, getLightLevel()));
 		this.goalSelector.addGoal(2, new MoveToWispGoal(this, 3.8D, 1.0D));
-		this.goalSelector.addGoal(3, new MoveAwayFromWispGoal(this, 48.0D, 1.6D));
+		this.goalSelector.addGoal(3, new MoveAwayFromWispGoal(this, 34.0D, 1.6D));
 	}
 
 	@Override
@@ -72,11 +72,9 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 	public void livingTick() {
 		super.livingTick();
 		
-		// every 30 ticks, check if has no wisp OR is close enough to wisp to despawn
-		if(this.ticksExisted % 30 == 15 && this.isServerWorld() && !this.world.isRemote) {
-			if(!this.hasWisp() || (this.rand.nextBoolean() && this.getDistanceSq(this.getWisp()) < Math.pow(3.0D, 2))) {
-				this.remove();
-			}
+		// every 30 ticks, check for despawn if you have no wisp
+		if(this.ticksExisted % 30 == 15 && this.isServerWorld() && !this.world.isRemote && !this.hasWisp()) {
+			this.remove();
 		}
 		
 		// spawn particles
@@ -324,7 +322,7 @@ public class WillOWispEntity extends FlyingEntity implements ILightEntity {
 		private int timeMoving;
 		
 		public MoveAwayFromWispGoal(final WillOWispEntity willowispIn, final double targetDistance, final double speed) {
-			super(willowispIn, 15.0D, speed);
+			super(willowispIn, 10.0D, speed);
 			this.moveAwayTime = 1000;
 			this.targetDistanceSq = targetDistance * targetDistance;
 			this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));

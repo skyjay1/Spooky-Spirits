@@ -45,7 +45,7 @@ import tricksters.util.PhookaRiddles;
 
 /*
  * Desc: 
- * [ ] PhookaEntity would spawn in all forest type biomes using Forge's BiomeDict. 
+ * [X] PhookaEntity would spawn in all forest type biomes using Forge's BiomeDict. 
  * [X] it could turn any berries laying on the ground or growing on a bush into spoiled berries. 
  * [X] wherever the phooka spawned, it would sit waiting for the playing to interact with it. 
  * [X] interacting with a phooka brings up a GUI which is a riddle minigame, 
@@ -182,7 +182,7 @@ public class PhookaEntity extends MonsterEntity {
 	
 	@Override
 	public boolean processInteract(final PlayerEntity player, final Hand hand) {
-		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && this.isSitting() && player.getHeldItem(hand).isEmpty()) {
+		if(player.getEntityWorld().isRemote && this.getDespawningTicks() <= 0 && player.getHeldItem(hand).isEmpty()) {
 			final PhookaRiddle riddle = getRiddleFor(player);
 			if(riddle != null) {
 				GuiLoader.loadPhookaGui(this, player, riddle);

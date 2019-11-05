@@ -10,6 +10,9 @@
   "block.tricksters.spoiled_berry_bush": "Spoiled Berry Bush",
   "item.tricksters.spoiled_berries": "Spoiled Berries",
   "item.tricksters.sunshine_scroll": "Sunshine Scroll",
+  "item.tricksters.phooka_spawn_egg": "Spawn Phooka",
+  "item.tricksters.wisp_spawn_egg": "Spawn Wisp",
+  "item.tricksters.possessed_pumpkin_spawn_egg": "Spawn Possessed Pumpkin",
   
   "_comment": "Phooka Riddles",
   "phooka.offer_riddle": "Darest thou answer my riddle, traveler?",

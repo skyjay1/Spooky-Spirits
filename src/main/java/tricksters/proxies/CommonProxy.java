@@ -1,8 +1,5 @@
 package tricksters.proxies;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
@@ -14,23 +11,19 @@ import net.minecraft.item.BlockNamedItem;
 import net.minecraft.item.Food;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.SpawnEggItem;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biome.Category;
 import net.minecraft.world.gen.Heightmap;
-import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import tricksters.block.BlockWispLight;
 import tricksters.block.SpoiledBerryBush;
 import tricksters.effect.PhookaEffect;
-import tricksters.entity.FlyingSkull;
-import tricksters.entity.FomorEntity;
 import tricksters.entity.PhookaEntity;
 import tricksters.entity.PossessedPumpkinEntity;
-import tricksters.entity.WillOWispEntity;
 import tricksters.entity.WispEntity;
 import tricksters.init.ModObjects;
 import tricksters.init.Tricksters;
@@ -63,6 +56,16 @@ public class CommonProxy {
 					new Item.Properties().group(ItemGroup.FOOD).food(spoiledBerryFood))
 				.setRegistryName(Tricksters.MODID, "spoiled_berries"),
 				new SunshineScrollItem().setRegistryName(Tricksters.MODID, "sunshine_scroll"));
+		// spawn eggs
+		event.getRegistry().registerAll(
+			new SpawnEggItem(ModObjects.PHOOKA, 0xA2A2A2, 0x454545, new Item.Properties().group(ItemGroup.MISC))
+				.setRegistryName(Tricksters.MODID, "phooka_spawn_egg"),
+			new SpawnEggItem(ModObjects.WISP, 0x3BB8D3, 0x30F0FF, new Item.Properties().group(ItemGroup.MISC))
+				.setRegistryName(Tricksters.MODID, "wisp_spawn_egg"),
+			new SpawnEggItem(ModObjects.POSSESSED_PUMPKIN, 0xFF8F00, 0xFFFD00, new Item.Properties().group(ItemGroup.MISC))
+				.setRegistryName(Tricksters.MODID, "possessed_pumpkin_spawn_egg")
+		);
+		// potion
 	}
 	
 	public void registerEntities(final RegistryEvent.Register<EntityType<?>> event) {
@@ -72,20 +75,11 @@ public class CommonProxy {
 //				.build("flying_skull").setRegistryName(Tricksters.MODID, "flying_skull")
 //		);
 		
-		event.getRegistry().register(
-			ModObjects.WILL_O_WISP.setRegistryName(Tricksters.MODID, "willowisp")
-		);
-		
-		event.getRegistry().register(
-				ModObjects.POSSESSED_PUMPKIN.setRegistryName(Tricksters.MODID, "possessed_pumpkin")
-		);
-		
-		event.getRegistry().register(
-				ModObjects.WISP.setRegistryName(Tricksters.MODID, "wisp")
-		);
-		
-		event.getRegistry().register(
-				ModObjects.PHOOKA.setRegistryName(Tricksters.MODID, "phooka")
+		event.getRegistry().registerAll(
+			ModObjects.WILL_O_WISP.setRegistryName(Tricksters.MODID, "willowisp"),
+			ModObjects.POSSESSED_PUMPKIN.setRegistryName(Tricksters.MODID, "possessed_pumpkin"),
+			ModObjects.WISP.setRegistryName(Tricksters.MODID, "wisp"),
+			ModObjects.PHOOKA.setRegistryName(Tricksters.MODID, "phooka")
 		);
 		
 //		event.getRegistry().register(
@@ -108,10 +102,11 @@ public class CommonProxy {
 				Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, WispEntity::canSpawnHere);
 		// biome spawns
 		for(final Biome b : ForgeRegistries.BIOMES.getValues()) {
-			b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.WISP, 30, 1, 1));
+			b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.WISP, 40, 1, 1));
 			b.getSpawns(EntityClassification.MONSTER).add(new Biome.SpawnListEntry(ModObjects.POSSESSED_PUMPKIN, 20, 1, 2));
-			if(b.getCategory() == Biome.Category.FOREST) {
-				b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.PHOOKA, 30, 1, 1));
+			if(b.getCategory() == Biome.Category.FOREST || b.getCategory() == Biome.Category.TAIGA 
+					|| b.getCategory() == Biome.Category.JUNGLE) {
+				b.getSpawns(EntityClassification.CREATURE).add(new Biome.SpawnListEntry(ModObjects.PHOOKA, 40, 1, 1));
 			}
 		}
 	}
